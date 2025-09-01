@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAuth } from "@/contexts/AuthContext"
 import { usePractice, Question, PracticeSession } from "@/contexts/PracticeContext"
+import { useUser } from "@clerk/nextjs"
 
 const domains = [
   "Frontend Development",
@@ -23,7 +23,7 @@ const domains = [
 const difficulties = ["Beginner", "Intermediate", "Advanced"]
 
 export default function PracticePage() {
-  const { user } = useAuth()
+  const { isLoaded, isSignedIn, user } = useUser()
   const { sessions, createSession, addBookmark, removeBookmark, isBookmarked } = usePractice()
   const [selectedDomain, setSelectedDomain] = useState("")
   const [selectedDifficulty, setSelectedDifficulty] = useState("")
@@ -41,17 +41,27 @@ export default function PracticePage() {
     }
   }, [currentSession])
 
-  if (!user) {
+  if (!isLoaded) {
     return (
-      <div className="container py-8 max-w-4xl mx-auto">
-        <Card className="text-center">
-          <CardContent className="p-8">
-            <h2 className="text-2xl font-bold mb-4">Login Required</h2>
-            <p className="text-muted-foreground mb-6">
+        <div className="container py-8 text-center">
+            <p>Loading...</p>
+        </div>
+    )
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="container py-8 max-w-2xl mx-auto text-center space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Login Required</CardTitle>
+            <CardDescription>
               Please log in to access practice mode and track your progress.
-            </p>
-            <Link href="/login">
-                <Button>Login</Button>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/sign-in">
+              <Button className="hero-button">Login to Continue</Button>
             </Link>
           </CardContent>
         </Card>
@@ -86,11 +96,11 @@ export default function PracticePage() {
       })
     } else {
       // Mark session as fully completed
-       setCurrentSession({
+      setCurrentSession({
         ...currentSession,
         currentQuestionIndex: nextIndex,
         completedQuestions: nextIndex,
-      });
+      })
     }
     setShowHints(false)
   }
@@ -107,7 +117,39 @@ export default function PracticePage() {
 
   const handleEndSession = () => {
     setCurrentSession(null)
+    setCurrentQuestion(null)
     setShowHints(false)
+  }
+
+  // Session completed view
+  if (currentSession && currentSession.currentQuestionIndex >= currentSession.totalQuestions) {
+    return (
+      <div className="container py-8 max-w-4xl mx-auto space-y-6">
+        <Card className="border-green-500/20 bg-green-500/5">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-center space-x-2 text-2xl">
+              <Trophy className="h-8 w-8 text-green-500" />
+              <span>Session Completed!</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-center">
+            <p className="text-lg">Great job! You've completed all {currentSession.totalQuestions} questions in this practice session.</p>
+            
+            <div className="flex items-center justify-center space-x-2">
+              <Button variant="outline" onClick={() => setCurrentSession(null)}>
+                Start New Session
+              </Button>
+              <Link href="/bookmarks">
+                <Button variant="outline">
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  View Bookmarks
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   // If no session, show domain/difficulty selection
@@ -154,7 +196,7 @@ export default function PracticePage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="interview-card">
             <CardContent className="flex items-center space-x-3 p-4">
               <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <Target className="h-5 w-5 text-blue-500" />
@@ -166,7 +208,7 @@ export default function PracticePage() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="interview-card">
             <CardContent className="flex items-center space-x-3 p-4">
               <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
                 <Trophy className="h-5 w-5 text-green-500" />
@@ -180,34 +222,32 @@ export default function PracticePage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="interview-card">
             <CardContent className="flex items-center space-x-3 p-4">
               <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
                 <Bookmark className="h-5 w-5 text-orange-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
-                    <Link href="/bookmarks" className="hover:underline">
-                        View
-                    </Link>
-                </p>
-                <p className="text-sm text-muted-foreground">Bookmarks</p>
+                <p className="text-2xl font-bold">View</p>
+                <Link href="/bookmarks" className="text-sm text-muted-foreground hover:text-foreground">
+                  Bookmarks
+                </Link>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Practice Setup */}
-        <Card>
+        <Card className="interview-card">
           <CardHeader>
             <CardTitle>Start New Practice Session</CardTitle>
             <CardDescription>
               Choose your domain and difficulty level to generate 10 practice questions
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <label className="text-sm font-medium">Domain</label>
                 <Select value={selectedDomain} onValueChange={setSelectedDomain}>
                   <SelectTrigger>
@@ -243,41 +283,10 @@ export default function PracticePage() {
             <Button 
               onClick={handleStartPractice}
               disabled={!selectedDomain || !selectedDifficulty || isLoading}
-              className="w-full"
+              className="w-full hero-button"
             >
               {isLoading ? "Generating Questions..." : "Start Practice Session"}
             </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  // Session completed view
-  if (currentSession.currentQuestionIndex >= currentSession.totalQuestions) {
-    return (
-      <div className="container py-8 max-w-4xl mx-auto space-y-6">
-        <Card className="border-green-500/20 bg-green-500/5 text-center">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-center space-x-2 text-2xl text-green-700 dark:text-green-400">
-              <Trophy className="h-8 w-8" />
-              <span>Session Completed!</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-lg">Great job! You've completed all {currentSession.totalQuestions} questions.</p>
-            
-            <div className="flex items-center justify-center space-x-2">
-              <Button variant="outline" onClick={handleEndSession}>
-                Practice Again
-              </Button>
-              <Link href="/bookmarks">
-                <Button>
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  View Bookmarks
-                </Button>
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -296,7 +305,7 @@ export default function PracticePage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="px-4 py-2 text-sm">
+          <Badge variant="outline" className="px-4 py-2">
             Question {currentSession.currentQuestionIndex + 1} of {currentSession.totalQuestions}
           </Badge>
           <Button variant="outline" size="sm" onClick={handleEndSession}>
@@ -307,10 +316,10 @@ export default function PracticePage() {
 
       {/* Question */}
       {currentQuestion && (
-        <Card>
+        <Card className="interview-card">
           <CardHeader>
             <div className="flex items-start justify-between">
-              <div className="space-y-3 flex-1 pr-4">
+              <div className="space-y-3 flex-1">
                 <div className="flex items-center space-x-2">
                   <Badge variant="secondary">{currentQuestion.domain}</Badge>
                   <Badge variant={
@@ -328,12 +337,11 @@ export default function PracticePage() {
                 </CardDescription>
               </div>
               
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2">
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={() => setShowHints(!showHints)}
-                  className="flex items-center"
                 >
                   <Lightbulb className="h-4 w-4 mr-2" />
                   Hints
@@ -343,25 +351,27 @@ export default function PracticePage() {
                   variant="ghost"
                   size="sm"
                   onClick={handleBookmarkToggle}
-                  className="px-2"
-                  aria-label="Toggle Bookmark"
                 >
                   {isBookmarked(currentQuestion.id) ? (
-                    <BookmarkCheck className="h-5 w-5 text-orange-500" />
+                    <BookmarkCheck className="h-4 w-4 text-orange-500" />
                   ) : (
-                    <Bookmark className="h-5 w-5" />
+                    <Bookmark className="h-4 w-4" />
                   )}
                 </Button>
               </div>
             </div>
 
             {showHints && (
-              <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
-                <h4 className="font-medium mb-2 flex items-center"><Lightbulb className="h-4 w-4 mr-2" />Hints to get you started:</h4>
-                <ul className="space-y-1.5 text-sm list-disc list-inside pl-2 text-muted-foreground">
+              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-medium mb-2 flex items-center">
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Hints to get you started:
+                </h4>
+                <ul className="space-y-1 text-sm">
                   {currentQuestion.hints.map((hint, index) => (
-                    <li key={index}>
-                      {hint}
+                    <li key={index} className="flex items-center space-x-2">
+                      <span className="text-muted-foreground">•</span>
+                      <span>{hint}</span>
                     </li>
                   ))}
                 </ul>
@@ -370,12 +380,12 @@ export default function PracticePage() {
           </CardHeader>
           
           <CardContent>
-            <div className="flex items-center justify-between border-t pt-4 mt-4">
+            <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Think through your answer, then proceed.
+                Think through your answer mentally, then proceed to the next question
               </div>
               
-              <Button onClick={handleNextQuestion}>
+              <Button onClick={handleNextQuestion} className="hero-button">
                 {currentSession.currentQuestionIndex + 1 === currentSession.totalQuestions 
                   ? "Complete Session" 
                   : "Next Question"

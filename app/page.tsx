@@ -36,7 +36,7 @@ const testimonials = [
 
 export default function Home() {
   return (
-    <div className="container py-1 space-y-24">
+    <div className="container mt-[-12px] space-y-22">
       {/* Hero + Stats Section (full screen) */}
       <section className="min-h-screen flex flex-col justify-center items-center space-y-12">
         {/* Hero */}
@@ -79,7 +79,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-10">
           <Card className="interview-card group cursor-pointer transition-all duration-300 hover:shadow-hover">
             <CardHeader className="space-y-3">
               <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -175,7 +175,7 @@ export default function Home() {
                 Hear what our users have to say about their success after using our platform.
             </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-10">
             {testimonials.map((testimonial, idx) => (
                 <Card key={idx} className="flex flex-col justify-between p-6">
                     <div>
@@ -200,7 +200,7 @@ export default function Home() {
       
       {/* --- NEW: Footer --- */}
       <footer className="border-t">
-        <div className="container flex flex-col items-center justify-between gap-6 py-10 md:h-24 md:flex-row md:py-0">
+        <div className="container flex flex-col items-center justify-between gap-6 py-10 md:h-24 md:flex-row md:py-0 px-10">
             <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
                 <Trophy className="h-6 w-6 text-primary" />
                 <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">

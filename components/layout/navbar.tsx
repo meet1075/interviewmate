@@ -60,19 +60,19 @@ export function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60  px-10">
       <div className="container flex h-16 items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2 mr-8">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-orange-400 to-orange-300">
             <BookOpen className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-purple-500 to-indigo-600 text-transparent bg-clip-text">InterviewMate</span>
+          <span className="text-xl font-bold bg-gradient-to-r from-orange-400 to-orange-300 text-transparent bg-clip-text">InterviewMate</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <SignedIn>
-          <div className="hidden md:flex items-center space-x-1 flex-1">
+        {/* <SignedIn> */}
+          <div className="hidden md:flex items-center space-x-1 flex-1 px-58">
             {navItems.map((item) => {
               const Icon = item.icon
               return (
@@ -92,7 +92,7 @@ export function Navbar() {
               )
             })}
           </div>
-        </SignedIn>
+        {/* </SignedIn> */}
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-4 ml-auto">
@@ -132,7 +132,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <SignedIn>
+        // <SignedIn>
           <div className="md:hidden border-t">
             <div className="container py-4 space-y-2">
               {navItems.map((item) => (
@@ -153,7 +153,7 @@ export function Navbar() {
               ))}
             </div>
           </div>
-        </SignedIn>
+        // </SignedIn>
       )}
     </nav>
   )
