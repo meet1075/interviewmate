@@ -9,9 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/contexts/AuthContext"
 import { usePractice } from "@/contexts/PracticeContext"
+import { useUser } from "@clerk/nextjs"
 
 export default function BookmarksPage() {
-  const { user } = useAuth()
+  const { user } = useUser()
   const { bookmarks, removeBookmark } = usePractice()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedDomain, setSelectedDomain] = useState("All")
