@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils"
 const userNavItems = [
   { title: "Home", href: "/", icon: Home },
   { title: "Practice", href: "/user/practice", icon: BookOpen },
-  { title: "Mock Interview", href: "/user/mock-interview", icon: ClipboardList },
+  { title: "Mock Interview", href: "/user/mockinterview", icon: ClipboardList },
   { title: "Dashboard", href: "/user/dashboard", icon: BarChart3 },
   { title: "Bookmarks", href: "/user/bookmarks", icon: Bookmark },
 ]
