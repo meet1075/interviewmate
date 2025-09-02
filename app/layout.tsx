@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PracticeProvider } from "@/contexts/PracticeContext";
 import { MockInterviewProvider } from "@/contexts/MockInterviewContext";
+import { AdminProvider } from "@/contexts/AdminContext";
 import { ClerkProvider } from '@clerk/nextjs';
 
 const geistSans = Geist({
@@ -30,13 +31,14 @@ export default function RootLayout({
               defaultTheme="system"
               storageKey="interview-mate-theme"
             >
-            {/* The custom AuthProvider is no longer needed */}
+            <AdminProvider>
             <MockInterviewProvider>
               <PracticeProvider>
                 <Navbar />
                 <main>{children}</main>
               </PracticeProvider>
             </MockInterviewProvider>
+            </AdminProvider>
           </ThemeProvider>
         </body>
       </html>

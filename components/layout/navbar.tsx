@@ -24,17 +24,17 @@ import { cn } from "@/lib/utils"
 // --- Navigation Data ---
 const userNavItems = [
   { title: "Home", href: "/", icon: Home },
-  { title: "Practice", href: "/practice", icon: BookOpen },
-  { title: "Mock Interview", href: "/mock-interview", icon: ClipboardList },
-  { title: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { title: "Bookmarks", href: "/bookmarks", icon: Bookmark },
+  { title: "Practice", href: "/user/practice", icon: BookOpen },
+  { title: "Mock Interview", href: "/user/mockinterview", icon: ClipboardList },
+  { title: "Dashboard", href: "/user/dashboard", icon: BarChart3 },
+  { title: "Bookmarks", href: "/user/bookmarks", icon: Bookmark },
 ]
 
 const adminNavItems = [
   { title: "Dashboard", href: "/admin", icon: BarChart3 },
-  { title: "Users", href: "/admin/users", icon: Users },
+  { title: "Users", href: "/admin/manageuser", icon: Users },
   { title: "Domains", href: "/admin/domains", icon: Database },
-  { title: "Questions", href: "/admin/questions", icon: ClipboardList },
+  // { title: "Questions", href: "/admin/questions", icon: ClipboardList },
 ]
 
 // --- Navbar Component ---
@@ -61,12 +61,12 @@ export function Navbar() {
       <div className="container flex h-16 items-center">
 
         {/* Left Section */}
-        <div className="flex-1 flex justify-start pl-10">
-            <Link href="/" className="flex items-center space-x-2 mr-8">
+        <div className="flex-1 flex justify-start pl-10 ">
+            <Link href="/" className="flex items-center space-x-2 mr-8 ">
                 <div className="flex h-8 w-8 items-center justify-center bg-gradient-to-r from-orange-400 to-orange-300  rounded-lg gradient-primary">
                     <BookOpen className="h-5 w-5  text-primary-foreground" />
                 </div>
-                <span className="text-xl font-bold text-gradient">InterviewMate</span>
+                <span className="text-xl font-bold text-gradient ">InterviewMate</span>
             </Link>
         </div>
 
