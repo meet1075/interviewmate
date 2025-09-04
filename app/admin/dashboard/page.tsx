@@ -86,7 +86,7 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">Monitor and manage the InterviewMate platform</p>
         </div>
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           <Button variant="outline">
             <BarChart3 className="h-4 w-4 mr-2" />
             Export Report
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
           <Button className="hero-button">
             Platform Settings
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Platform Stats */}
