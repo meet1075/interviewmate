@@ -31,7 +31,7 @@ const userNavItems = [
 ]
 
 const adminNavItems = [
-  { title: "Dashboard", href: "/admin", icon: BarChart3 },
+  { title: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
   { title: "Users", href: "/admin/manageuser", icon: Users },
   { title: "Domains", href: "/admin/domains", icon: Database },
   // { title: "Questions", href: "/admin/questions", icon: ClipboardList },
