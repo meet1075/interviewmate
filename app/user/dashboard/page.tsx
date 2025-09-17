@@ -18,22 +18,22 @@ export default function DashboardPage() {
 const { user } = useUser()
 
 
-    // if (!user) {
-    //     return (
-    //         <div className="container py-8 max-w-4xl mx-auto">
-    //     <Card className="text-center">
-    //       <CardContent className="p-8">
-    //         <h2 className="text-2xl font-bold mb-4">Login Required</h2>
-    //         <p className="text-muted-foreground mb-6">You need to be logged in to view your dashboard
-    //         </p>
-    //         <Link href="/login">
-    //             <Button>Login</Button>
-    //         </Link>
-    //       </CardContent>
-    //     </Card>
-    //   </div>
-    //     )
-    // }
+    if (!user) {
+        return (
+            <div className="container py-8 max-w-4xl mx-auto">
+        <Card className="text-center">
+          <CardContent className="p-8">
+            <h2 className="text-2xl font-bold mb-4">Login Required</h2>
+            <p className="text-muted-foreground mb-6">You need to be logged in to view your dashboard
+            </p>
+            <Link href="/sign-in">
+                <Button>Login</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+        )
+    }
 
     // --- Data Aggregation ---
     const totalPracticeQuestions = practiceSessions.reduce((acc, s) => acc + s.completedQuestions, 0)
