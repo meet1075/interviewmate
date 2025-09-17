@@ -20,16 +20,18 @@ async function connectDb() {
   }
 
   if (!cached.promise) {
-    const MONGO_URL = process.env.MONGO_URL;
+    const MONGODB_URL = process.env.MONGODB_URL;
+    console.log("MONGO_URL from env:", process.env.MONGODB_URL);
 
-    if (!MONGO_URL) {
+
+    if (!MONGODB_URL) {
       throw new Error(
         "Please define the MONGO_URL environment variable inside .env.local"
       );
     }
 
     console.log("Creating new database connection.");
-    cached.promise = mongoose.connect(MONGO_URL);
+    cached.promise = mongoose.connect(MONGODB_URL);
   }
   
   try {
@@ -47,7 +49,7 @@ export default connectDb;
 
 
 // import mongoose from "mongoose"
-// export async function connect() {
+// export async function connectDb() {
 //     try {
 //         mongoose.connect(process.env.MONGO_URL!)
 //         const connection=mongoose.connection
