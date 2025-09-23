@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { PracticeProvider } from "@/contexts/PracticeContext";
 import { MockInterviewProvider } from "@/contexts/MockInterviewContext";
 import { AdminProvider } from "@/contexts/AdminContext";
+import { ToastProvider } from "@/components/ui/use-toast";
 import { ClerkProvider } from '@clerk/nextjs';
 
 const geistSans = Geist({
@@ -31,14 +32,16 @@ export default function RootLayout({
               defaultTheme="system"
               storageKey="interview-mate-theme"
             >
-            <AdminProvider>
-            <MockInterviewProvider>
-              <PracticeProvider>
-                <Navbar />
-                <main>{children}</main>
-              </PracticeProvider>
-            </MockInterviewProvider>
-            </AdminProvider>
+            <ToastProvider>
+              <AdminProvider>
+              <MockInterviewProvider>
+                <PracticeProvider>
+                  <Navbar />
+                  <main>{children}</main>
+                </PracticeProvider>
+              </MockInterviewProvider>
+              </AdminProvider>
+            </ToastProvider>
           </ThemeProvider>
         </body>
       </html>

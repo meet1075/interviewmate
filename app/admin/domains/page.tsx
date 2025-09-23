@@ -2,112 +2,180 @@
 
 import { useState, useEffect } from "react"
 import { Plus, Edit, Trash2, MoreHorizontal } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { useToast } from "@/components/ui/use-toast"
 
-// --- Mock Implementations for a Self-Contained Component ---
-
-// Mock useRouter from next/navigation
-const useRouter = () => ({
-    push: (path: string) => console.log(`Navigating to ${path}`)
-});
-
-// Mock Clerk's useUser hook
-const useUser = () => {
-    return { 
-        isLoaded: true,
-        user: { publicMetadata: { role: 'admin' } } 
-    };
-};
-
-// Mock Admin Context and Interfaces
+// Domain interface matching the MongoDB model
 export interface DomainData { 
-  id: string; 
+  _id: string; 
   name: string; 
   questionsCount: number; 
   activeUsers: number; 
   status: "active" | "inactive";
-  createdAt: string; 
+  createdAt: string;
+  updatedAt: string;
 }
-
-const useAdmin = () => {
-    const [domains, setDomains] = useState<DomainData[]>([
-        { id: "1", name: "Frontend Development", questionsCount: 2341, activeUsers: 3421, status: "active", createdAt: "2023-08-15" },
-        { id: "2", name: "Backend Development", questionsCount: 1876, activeUsers: 2890, status: "active", createdAt: "2023-08-20" },
-        { id: "3", name: "System Design", questionsCount: 945, activeUsers: 1654, status: "active", createdAt: "2023-09-01" },
-        { id: "4", name: "Data Science", questionsCount: 1234, activeUsers: 1987, status: "inactive", createdAt: "2023-09-15" },
-    ]);
-
-    const addDomain = (domainData: { name: string }) => {
-        const newDomain: DomainData = {
-            id: Date.now().toString(),
-            name: domainData.name,
-            questionsCount: 0,
-            activeUsers: 0,
-            status: "active",
-            createdAt: new Date().toISOString().split('T')[0]
-        };
-        setDomains(prev => [...prev, newDomain]);
-    };
-
-    const updateDomain = (domainId: string, updatedData: { name: string }) => {
-        setDomains(prev => prev.map(d => d.id === domainId ? { ...d, ...updatedData } : d));
-    };
-
-    const deleteDomain = (domainId: string) => {
-        setDomains(prev => prev.filter(d => d.id !== domainId));
-    };
-
-    const updateDomainStatus = (domainId: string, newStatus: "active" | "inactive") => {
-        setDomains(prev => prev.map(d => d.id === domainId ? { ...d, status: newStatus } : d));
-    };
-
-    return { domains, addDomain, updateDomain, deleteDomain, updateDomainStatus };
-};
-
-// A simple mock toast function if you don't have one set up
-const useToast = () => ({
-  toast: (options: { title: string, description: string, variant?: string }) => {
-    console.log(`Toast: ${options.title} - ${options.description}`);
-  }
-});
 
 
 export default function ManageDomainsPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const { domains, addDomain, updateDomain, deleteDomain, updateDomainStatus } = useAdmin();
-
+  
+  // State management for domains
+  const [domains, setDomains] = useState<DomainData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [currentDomain, setCurrentDomain] = useState<DomainData | null>(null);
   const [domainName, setDomainName] = useState("");
 
+  // Fetch domains from API
+  const fetchDomains = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/domains');
+      
+      if (!response.ok) {
+        if (response.status === 403) {
+          toast({ title: "Error", description: "Unauthorized access", variant: "destructive" });
+          router.push('/');
+          return;
+        }
+        throw new Error('Failed to fetch domains');
+      }
+      
+      const data = await response.json();
+      setDomains(data);
+    } catch (error) {
+      console.error('Error fetching domains:', error);
+      toast({ title: "Error", description: "Failed to load domains", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create new domain
+  const addDomain = async (domainData: { name: string }) => {
+    try {
+      const response = await fetch('/api/domains', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(domainData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to create domain');
+      }
+
+      const newDomain = await response.json();
+      setDomains(prev => [newDomain, ...prev]);
+      toast({ title: "Success", description: "Domain created successfully" });
+    } catch (error) {
+      console.error('Error creating domain:', error);
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to create domain", variant: "destructive" });
+    }
+  };
+
+  // Update domain
+  const updateDomain = async (domainId: string, updatedData: { name: string }) => {
+    try {
+      const response = await fetch(`/api/domains/${domainId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update domain');
+      }
+
+      const updatedDomain = await response.json();
+      setDomains(prev => prev.map(d => d._id === domainId ? updatedDomain : d));
+      toast({ title: "Success", description: "Domain updated successfully" });
+    } catch (error) {
+      console.error('Error updating domain:', error);
+      toast({ title: "Error", description: "Failed to update domain", variant: "destructive" });
+    }
+  };
+
+  // Delete domain
+  const deleteDomain = async (domainId: string) => {
+    try {
+      const response = await fetch(`/api/domains/${domainId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete domain');
+      }
+
+      setDomains(prev => prev.filter(d => d._id !== domainId));
+      toast({ title: "Success", description: "Domain deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting domain:', error);
+      toast({ title: "Error", description: "Failed to delete domain", variant: "destructive" });
+    }
+  };
+
+  // Update domain status
+  const updateDomainStatus = async (domainId: string, newStatus: "active" | "inactive") => {
+    try {
+      const response = await fetch(`/api/domains/${domainId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update domain status');
+      }
+
+      const updatedDomain = await response.json();
+      setDomains(prev => prev.map(d => d._id === domainId ? updatedDomain : d));
+      toast({ title: "Status Updated", description: `Domain is now ${newStatus}.` });
+    } catch (error) {
+      console.error('Error updating domain status:', error);
+      toast({ title: "Error", description: "Failed to update domain status", variant: "destructive" });
+    }
+  };
+
   useEffect(() => {
     if (isLoaded && user?.publicMetadata?.role !== 'admin') {
       router.push('/');
+      return;
+    }
+    
+    if (isLoaded && user?.publicMetadata?.role === 'admin') {
+      fetchDomains();
     }
   }, [isLoaded, user, router]);
 
-  if (!isLoaded || user?.publicMetadata?.role !== 'admin') {
-    return <div className="container py-8 text-center"><p>Loading or Access Denied...</p></div>;
+  if (!isLoaded) {
+    return <div className="container py-8 text-center"><p>Loading...</p></div>;
+  }
+
+  if (user?.publicMetadata?.role !== 'admin') {
+    return <div className="container py-8 text-center"><p>Access Denied</p></div>;
   }
   
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!domainName.trim()) {
         toast({ title: "Error", description: "Domain name is required", variant: "destructive" });
         return;
     }
-    addDomain({ name: domainName });
-    toast({ title: "Success", description: "Domain created successfully" });
+    
+    await addDomain({ name: domainName });
     setIsCreateOpen(false);
     setDomainName("");
   };
@@ -118,28 +186,26 @@ export default function ManageDomainsPage() {
     setIsEditOpen(true);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!currentDomain || !domainName.trim()) {
         toast({ title: "Error", description: "Domain name is required", variant: "destructive" });
         return;
     }
-    updateDomain(currentDomain.id, { name: domainName });
-    toast({ title: "Success", description: "Domain updated successfully" });
+    
+    await updateDomain(currentDomain._id, { name: domainName });
     setIsEditOpen(false);
     setCurrentDomain(null);
     setDomainName("");
   };
   
-  const handleDelete = (domainId: string) => {
-      deleteDomain(domainId);
-      toast({ title: "Success", description: "Domain deleted successfully" });
+  const handleDelete = async (domainId: string) => {
+      await deleteDomain(domainId);
   };
 
-  const handleStatusToggle = (domain: DomainData) => {
+  const handleStatusToggle = async (domain: DomainData) => {
       const newStatus = domain.status === 'active' ? 'inactive' : 'active';
-      updateDomainStatus(domain.id, newStatus);
-      toast({ title: "Status Updated", description: `${domain.name} is now ${newStatus}.`});
-  }
+      await updateDomainStatus(domain._id, newStatus);
+  };
 
   return (
     <div className="container py-8 space-y-6 px-10">
@@ -174,58 +240,64 @@ export default function ManageDomainsPage() {
           <CardDescription>View and manage all available interview domains.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Domain</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Questions</TableHead>
-                  <TableHead>Active Users</TableHead>
-                  <TableHead className="w-[50px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {domains.map((domain) => (
-                  <TableRow key={domain.id}>
-                    <TableCell>
-                      <div className="font-medium">{domain.name}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id={`status-${domain.id}`}
-                          checked={domain.status === 'active'}
-                          onCheckedChange={() => handleStatusToggle(domain)}
-                        />
-                        {/* Added a fixed width to the label to prevent layout shift */}
-                        <Label htmlFor={`status-${domain.id}`} className="capitalize w-16 text-left">
-                            {domain.status}
-                        </Label>
-                      </div>
-                    </TableCell>
-                    <TableCell>{domain.questionsCount.toLocaleString()}</TableCell>
-                    <TableCell>{domain.activeUsers.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openEditDialog(domain)}>
-                                    <Edit className="h-4 w-4 mr-2" />Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(domain.id)}>
-                                    <Trash2 className="h-4 w-4 mr-2" />Delete
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </TableCell>
+          {loading ? (
+            <div className="text-center py-8">
+              <p>Loading domains...</p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Domain</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Questions</TableHead>
+                    <TableHead>Active Users</TableHead>
+                    <TableHead className="w-[50px] text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {domains.map((domain: DomainData) => (
+                    <TableRow key={domain._id}>
+                      <TableCell>
+                        <div className="font-medium">{domain.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id={`status-${domain._id}`}
+                            checked={domain.status === 'active'}
+                            onCheckedChange={() => handleStatusToggle(domain)}
+                          />
+                          {/* Added a fixed width to the label to prevent layout shift */}
+                          <Label htmlFor={`status-${domain._id}`} className="capitalize w-16 text-left">
+                              {domain.status}
+                          </Label>
+                        </div>
+                      </TableCell>
+                      <TableCell>{domain.questionsCount.toLocaleString()}</TableCell>
+                      <TableCell>{domain.activeUsers.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openEditDialog(domain)}>
+                                      <Edit className="h-4 w-4 mr-2" />Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(domain._id)}>
+                                      <Trash2 className="h-4 w-4 mr-2" />Delete
+                                  </DropdownMenuItem>
+                              </DropdownMenuContent>
+                          </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
