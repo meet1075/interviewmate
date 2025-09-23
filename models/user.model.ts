@@ -16,6 +16,16 @@ const userSchema = new Schema({
             required:true},
     lastName:{type:String,
             required:true},
+    role: {
+           type: String,
+           enum: ['admin', 'user'],
+           default: 'user'
+           },
+    status: {
+           type: String,
+           enum: ['active', 'suspended', 'inactive'],
+           default: 'active'
+           },
     bookmarkedQuestions: [{
             type: Schema.Types.ObjectId,
             ref: 'Question'
