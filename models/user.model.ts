@@ -16,6 +16,10 @@ const userSchema = new Schema({
             required:true},
     lastName:{type:String,
             required:true},
+    bookmarkedQuestions: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Question'
+  }]
 },{timestamps:true})
 
 const User = models?.User || model("User",userSchema)
