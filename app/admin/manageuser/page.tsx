@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
 import { Input } from "@/components/ui/input"
@@ -46,35 +45,52 @@ export default function ManageUsersPage() {
   const { toast } = useToast();
 
   // State management
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [allUsers, setAllUsers] = useState<AdminUser[]>([]); // Store all users
+  const [users, setUsers] = useState<AdminUser[]>([]); // Display filtered users
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<UserStats>({ total: 0, active: 0, suspended: 0 });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // Debounced search
-  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  // Client-side filtering function
+  const filterUsers = (userList: AdminUser[]) => {
+    return userList.filter(user => {
+      // Search filter
+      const matchesSearch = searchQuery === "" || 
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Status filter
+      const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+      
+      // Role filter
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      
+      return matchesSearch && matchesStatus && matchesRole;
+    });
+  };
 
+  // Update displayed users when filters change
+  useEffect(() => {
+    const filtered = filterUsers(allUsers);
+    setUsers(filtered);
+  }, [allUsers, searchQuery, statusFilter, roleFilter]);
+
+  // Debounced search - removed as we're doing client-side filtering
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 500);
+      const filtered = filterUsers(allUsers);
+      setUsers(filtered);
+    }, 300); // Reduced delay for better UX
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, allUsers]);
 
-  // Fetch users from API
+  // Fetch users from API (only once on load)
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const queryParams = new URLSearchParams({
-        search: debouncedSearch,
-        status: statusFilter,
-        role: roleFilter,
-        limit: '100' // Adjust as needed
-      });
-
-      const response = await fetch(`/api/manageuser?${queryParams}`);
+      const response = await fetch(`/api/manageuser?limit=1000`); // Get all users
       
       if (!response.ok) {
         if (response.status === 403) {
@@ -86,7 +102,7 @@ export default function ManageUsersPage() {
       }
       
       const data = await response.json();
-      setUsers(data.users);
+      setAllUsers(data.users); // Store all users
       setStats(data.stats);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -96,8 +112,32 @@ export default function ManageUsersPage() {
     }
   };
 
-  // Update user status
+  // Update user status with optimistic UI updates
   const updateUserStatus = async (userId: string, newStatus: 'active' | 'suspended') => {
+    // Find the user to get current status
+    const user = allUsers.find(u => u.id === userId);
+    if (!user) return;
+    
+    const oldStatus = user.status;
+    
+    // Optimistic update - update both allUsers immediately
+    setAllUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+    
+    // Update stats optimistically
+    setStats(prev => {
+      const newStats = { ...prev };
+      
+      if (oldStatus === 'active' && newStatus === 'suspended') {
+        newStats.active -= 1;
+        newStats.suspended += 1;
+      } else if (oldStatus === 'suspended' && newStatus === 'active') {
+        newStats.active += 1;
+        newStats.suspended -= 1;
+      }
+      
+      return newStats;
+    });
+
     try {
       const response = await fetch(`/api/manageuser/${userId}`, {
         method: 'PATCH',
@@ -108,19 +148,27 @@ export default function ManageUsersPage() {
       if (!response.ok) {
         throw new Error('Failed to update user status');
       }
-
-      const updatedUser = await response.json();
-      
-      // Update local state
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
-      
-      // Update stats
-      fetchUsers(); // Refetch to get updated stats
       
       toast({ title: "Success", description: `User status updated to ${newStatus}` });
     } catch (error) {
       console.error('Error updating user status:', error);
       toast({ title: "Error", description: "Failed to update user status", variant: "destructive" });
+      
+      // Revert optimistic update on error
+      setAllUsers(prev => prev.map(u => u.id === userId ? { ...u, status: oldStatus } : u));
+      
+      // Revert stats on error
+      setStats(prev => {
+        const newStats = { ...prev };
+        if (oldStatus === 'active' && newStatus === 'suspended') {
+          newStats.active += 1;
+          newStats.suspended -= 1;
+        } else if (oldStatus === 'suspended' && newStatus === 'active') {
+          newStats.active -= 1;
+          newStats.suspended += 1;
+        }
+        return newStats;
+      });
     }
   };
 
@@ -136,12 +184,12 @@ export default function ManageUsersPage() {
     }
   }, [isLoaded, user, router]);
 
-  // Refetch when filters change
+  // Refetch when component loads and user is admin
   useEffect(() => {
     if (isLoaded && user?.publicMetadata?.role === 'admin') {
       fetchUsers();
     }
-  }, [debouncedSearch, statusFilter, roleFilter]);
+  }, [isLoaded, user, router]);
 
   if (!isLoaded) {
     return <div className="container py-8 text-center"><p>Loading...</p></div>;
@@ -184,13 +232,11 @@ export default function ManageUsersPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="flex-1">
               <Input 
                 placeholder="Search users by name or email..." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)} 
-                className="pl-10" 
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -220,47 +266,62 @@ export default function ManageUsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Join Date</TableHead>
-                    <TableHead>Performance</TableHead>
-                    <TableHead className="text-right">Status Toggle</TableHead>
+                    <TableHead className="w-[250px]">User</TableHead>
+                    <TableHead className="w-[100px]">Role</TableHead>
+                    <TableHead className="w-[120px]">Status</TableHead>
+                    <TableHead className="w-[120px]">Join Date</TableHead>
+                    <TableHead className="w-[120px]">Performance</TableHead>
+                    <TableHead className="w-[160px] text-right">Status Toggle</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {users.map((u: AdminUser) => (
                     <TableRow key={u.id}>
-                      <TableCell>
+                      <TableCell className="w-[250px]">
                         <div className="flex items-center space-x-3">
-                          <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center">
+                          <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-medium text-primary-foreground">{u.name.charAt(0)}</span>
                           </div>
-                          <div>
-                            <div className="font-medium">{u.name}</div>
-                            <div className="text-sm text-muted-foreground">{u.email}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium truncate">{u.name}</div>
+                            <div className="text-sm text-muted-foreground truncate">{u.email}</div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{getRoleBadge(u.role)}</TableCell>
-                      <TableCell>{getStatusBadge(u.status)}</TableCell>
-                      <TableCell className="text-sm">{new Date(u.joinDate).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>{u.sessionsCompleted} sessions</div>
-                          <div className="text-muted-foreground">{u.averageScore}% avg</div>
-                        </div>
+                      <TableCell className="w-[100px]">{getRoleBadge(u.role)}</TableCell>
+                      <TableCell className="w-[120px]">{getStatusBadge(u.status)}</TableCell>
+                      <TableCell className="w-[120px] text-sm">{new Date(u.joinDate).toLocaleDateString()}</TableCell>
+                      <TableCell className="w-[120px]">
+                        {u.role === 'user' ? (
+                          <div className="text-sm">
+                            <div className="font-medium">{u.averageScore}% avg</div>
+                            <div className="text-muted-foreground">{u.sessionsCompleted} sessions</div>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">N/A</div>
+                        )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="w-[160px]">
                         <div className="flex items-center justify-end space-x-2">
-                          <Switch
-                            id={`status-${u.id}`}
-                            checked={u.status === 'active'}
-                            onCheckedChange={(checked) => updateUserStatus(u.id, checked ? 'active' : 'suspended')}
-                          />
-                          <Label htmlFor={`status-${u.id}`} className="text-sm cursor-pointer">
-                            {u.status === 'active' ? 'Active' : 'Suspended'}
-                          </Label>
+                          {u.role === 'admin' ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                              </div>
+                              <Label className="text-sm text-muted-foreground">Admin</Label>
+                            </div>
+                          ) : (
+                            <>
+                              <Switch
+                                id={`status-${u.id}`}
+                                checked={u.status === 'active'}
+                                onCheckedChange={(checked) => updateUserStatus(u.id, checked ? 'active' : 'suspended')}
+                              />
+                              <Label htmlFor={`status-${u.id}`} className="text-sm cursor-pointer w-16 text-right">
+                                {u.status === 'active' ? 'Active' : 'Suspended'}
+                              </Label>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
