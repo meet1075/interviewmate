@@ -4,16 +4,14 @@ import { Schema, model, models } from "mongoose";
 
 const questionSchema = new Schema({
   title: { type: String, required: true },
-  
+  description: { type: String, required: true },
   answer: { type: String, required: true },
-    
+  hints: [{ type: String }],
   domain: { type: String, required: true },
-  difficulty: { type: String, required: true },
-  
-  practiceSession: {
-    type: Schema.Types.ObjectId,
-    ref: 'PracticeSession',
-    required: true
+  difficulty: { 
+    type: String, 
+    required: true,
+    enum: ['Beginner', 'Intermediate', 'Advanced']
   }
 }, { timestamps: true });
 

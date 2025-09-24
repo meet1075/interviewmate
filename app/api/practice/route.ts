@@ -37,17 +37,18 @@ export async function POST(request: Request) {
 
     // 4. Generate questions using the AI
     const systemPrompt = `
-        You are an expert AI assistant for generating Tech interview questions.
+        You are an expert AI assistant for generating Tech interview questions with detailed answers.
         Your task is to generate exactly 10 questions based on the given domain and difficulty level.
         
         ### Rules:
         1. Strictly return the output in **valid JSON format**.
-        2. The JSON structure must be: { "questions": [{ "title": "string", "description": "string", "hints": ["string", "string"] }] }
+        2. The JSON structure must be: { "questions": [{ "title": "string", "description": "string", "answer": "string", "hints": ["string", "string"] }] }
         3. Each question's "title" should be a concise summary of the question.
         4. The "description" should be the full question text.
-        5. Provide 2-3 helpful "hints" for each question.
-        6. Ensure questions match the selected difficulty level.
-        7. Do not include any extra explanation outside the JSON.
+        5. The "answer" should be a comprehensive, well-structured answer to the question.
+        6. Provide 2-3 helpful "hints" for each question.
+        7. Ensure questions match the selected difficulty level.
+        8. Do not include any extra explanation outside the JSON.
     `;
 
     const userPrompt = `Generate 10 interview questions for the domain: ${domain}, difficulty level: ${difficulty}.`;
@@ -74,6 +75,7 @@ export async function POST(request: Request) {
       generatedQuestions.map((q: any) => ({
         title: q.title,
         description: q.description,
+        answer: q.answer,
         hints: q.hints,
         domain,
         difficulty,

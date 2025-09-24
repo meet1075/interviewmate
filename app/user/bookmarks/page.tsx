@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Bookmark, BookmarkX, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,9 +13,11 @@ import { useUser } from "@clerk/nextjs"
 
 export default function BookmarksPage() {
   const { user } = useUser()
-  const { bookmarks, removeBookmark } = usePractice()
+  const { bookmarks, removeBookmark, loadBookmarks } = usePractice()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedDomain, setSelectedDomain] = useState("All")
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set())
+  const [availableDomains, setAvailableDomains] = useState<string[]>([])
 
   if (!user) {
     return (
@@ -41,7 +43,31 @@ export default function BookmarksPage() {
     return matchesSearch && matchesDomain
   })
 
-  const domains = ["All", ...Array.from(new Set(bookmarks.map(q => q.domain)))]
+  // Update available domains when bookmarks change
+  useEffect(() => {
+    const uniqueDomains = Array.from(new Set(bookmarks.map(q => q.domain)))
+    setAvailableDomains(["All", ...uniqueDomains])
+  }, [bookmarks])
+
+  const domains = availableDomains
+
+  const toggleExpanded = (questionId: string) => {
+    setExpandedQuestions(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId)
+      } else {
+        newSet.add(questionId)
+      }
+      return newSet
+    })
+  }
+
+  useEffect(() => {
+    if (user) {
+      loadBookmarks()
+    }
+  }, [user])
 
   return (
     <div className="container py-8 max-w-4xl mx-auto space-y-6">
@@ -106,17 +132,55 @@ export default function BookmarksPage() {
                       <CardTitle className="text-lg">{question.title}</CardTitle>
                       <CardDescription>{question.description}</CardDescription>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => removeBookmark(question.id)} 
-                      className="text-muted-foreground hover:text-destructive"
-                      aria-label="Remove bookmark"
-                    >
-                      <BookmarkX className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => toggleExpanded(question.id)}
+                        className="text-xs"
+                      >
+                        {expandedQuestions.has(question.id) ? "Hide Answer" : "Show Answer"}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => removeBookmark(question.id)} 
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="Remove bookmark"
+                      >
+                        <BookmarkX className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
+
+                {/* Expanded content with answer and hints */}
+                {expandedQuestions.has(question.id) && (
+                  <CardContent className="space-y-4">
+                    {/* Answer */}
+                    {question.answer && (
+                      <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                        <h4 className="font-semibold text-green-800 dark:text-green-400 mb-2">💡 Answer</h4>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{question.answer}</p>
+                      </div>
+                    )}
+
+                    {/* Hints */}
+                    {question.hints && question.hints.length > 0 && (
+                      <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <h4 className="font-semibold text-blue-800 dark:text-blue-400 mb-2">💭 Hints</h4>
+                        <ul className="space-y-1">
+                          {question.hints.map((hint, index) => (
+                            <li key={index} className="text-sm flex items-start space-x-2">
+                              <span className="text-blue-500 font-bold">•</span>
+                              <span>{hint}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                )}
               </Card>
             ))}
           </div>
