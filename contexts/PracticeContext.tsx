@@ -144,12 +144,19 @@ export function PracticeProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/bookmarks');
       if (!response.ok) {
+        // If it's a 404, user might not be created yet, silently set empty bookmarks
+        if (response.status === 404) {
+          setBookmarks([]);
+          return;
+        }
         throw new Error('Failed to load bookmarks');
       }
       const data = await response.json();
       setBookmarks(data.bookmarks || []);
     } catch (error) {
       console.error('Error loading bookmarks:', error);
+      // Set empty bookmarks as fallback
+      setBookmarks([]);
     }
   };
 

@@ -15,8 +15,10 @@ export async function GET() {
     // 2. Connect to the database
     await connectDb();
     const user = await User.findOne({ clerkId: userId }).populate('bookmarkedQuestions');
+    
+    // If user doesn't exist yet (new user), return empty bookmarks array
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      return NextResponse.json({ bookmarks: [] });
     }
 
     // 3. Transform the bookmarked questions to match frontend interface
@@ -48,9 +50,11 @@ export async function POST(request: Request) {
 
     // 2. Connect to the database
     await connectDb();
-    const user = await User.findOne({ clerkId: userId });
+    let user = await User.findOne({ clerkId: userId });
+    
+    // If user doesn't exist yet (race condition with webhook), return error to retry
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      return new NextResponse("User not found. Please try again in a moment.", { status: 404 });
     }
 
     // 3. Get question ID from request body
@@ -92,7 +96,7 @@ export async function DELETE(request: Request) {
     await connectDb();
     const user = await User.findOne({ clerkId: userId });
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      return new NextResponse("User not found. Please try again in a moment.", { status: 404 });
     }
 
     // 3. Get question ID from request body
