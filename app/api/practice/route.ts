@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const userPrompt = `Generate 10 interview questions for the domain: ${domain}, difficulty level: ${difficulty}.`;
 
     const response = await client.chat.completions.create({
-        model: "gemini-1.5-flash", 
+        model: "gemini-2.0-flash", 
         messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
