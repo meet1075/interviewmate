@@ -19,7 +19,6 @@ const useToast = () => ({
   }
 });
 
-const domains = ['Frontend Development', 'Backend Development', 'System Design']
 const difficulties = ['Beginner', 'Intermediate', 'Advanced']
 
 export default function MockInterviewPage() {
@@ -27,6 +26,8 @@ export default function MockInterviewPage() {
   const { createMockSession, submitAnswer, completeMockSession, getUserSessions } = useMockInterview()
   const { toast } = useToast()
   
+  const [domains, setDomains] = useState<string[]>([])
+  const [domainsLoading, setDomainsLoading] = useState(true)
   const [selectedDomain, setSelectedDomain] = useState('')
   const [selectedDifficulty, setSelectedDifficulty] = useState('')
   const [currentSession, setCurrentSession] = useState<MockSession | null>(null)
@@ -38,39 +39,103 @@ export default function MockInterviewPage() {
   const [completedSession, setCompletedSession] = useState<MockSession | null>(null)
   const [showResults, setShowResults] = useState(false)
 
-  const finishInterview = useCallback(() => {
+  // Fetch domains from database
+  useEffect(() => {
+    const fetchDomains = async () => {
+      try {
+        setDomainsLoading(true)
+        const response = await fetch('/api/domains/public')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.domains && Array.isArray(data.domains)) {
+            setDomains(data.domains)
+          }
+        } else {
+          console.error('Failed to fetch domains')
+          // Fallback to default domains
+          setDomains(['Frontend Development', 'Backend Development', 'System Design'])
+        }
+      } catch (error) {
+        console.error('Error fetching domains:', error)
+        // Fallback to default domains
+        setDomains(['Frontend Development', 'Backend Development', 'System Design'])
+      } finally {
+        setDomainsLoading(false)
+      }
+    }
+
+    if (isLoaded) {
+      fetchDomains()
+    }
+  }, [isLoaded])
+
+  const finishInterview = useCallback(async () => {
     if (!currentSession) return
     
-    const completed = completeMockSession(currentSession.id)
-    if(completed) {
-        setCompletedSession(completed)
-        setShowResults(true)
-        setIsStarted(false)
-        
-        toast({
-            title: "Interview Completed!",
-            description: `You earned ${completed.pointsEarned} points`
-        })
+    try {
+      const completed = await completeMockSession(currentSession.id)
+      if(completed) {
+          // Create a mock session object for display
+          const completedSessionData: MockSession = {
+            id: currentSession.id,
+            userId: currentSession.userId,
+            domain: currentSession.domain,
+            difficulty: currentSession.difficulty,
+            questions: currentSession.questions,
+            answers: completed.individualAnswers || currentSession.answers,
+            startTime: currentSession.startTime,
+            endTime: new Date().toISOString(),
+            overallRating: completed.overallRating,
+            overallFeedback: completed.overallFeedback,
+            pointsEarned: Math.round(completed.overallRating * 10),
+            status: 'completed'
+          }
+          
+          setCompletedSession(completedSessionData)
+          setShowResults(true)
+          setIsStarted(false)
+          
+          toast({
+              title: "Interview Completed!",
+              description: `You earned ${completedSessionData.pointsEarned} points`
+          })
+      }
+    } catch (error) {
+      console.error('Error completing interview:', error)
+      toast({
+        title: "Error",
+        description: "Failed to complete interview",
+        variant: "destructive"
+      })
     }
   }, [currentSession, completeMockSession, toast])
 
-  const handleNextQuestion = useCallback(() => {
+  const handleNextQuestion = useCallback(async () => {
     if (!currentSession || !user) return
     
     const currentQuestion = currentSession.questions[currentQuestionIndex]
     const timeSpent = (currentQuestion.timeLimit * 60) - timeRemaining
     
-    if (answer.trim()) {
-      submitAnswer(currentSession.id, currentQuestion.id, answer, timeSpent)
+    try {
+      if (answer.trim()) {
+        await submitAnswer(currentSession.id, currentQuestion.id, answer, timeSpent)
+      }
+      
+      if (currentQuestionIndex < currentSession.questions.length - 1) {
+        setCurrentQuestionIndex(prev => prev + 1)
+        setAnswer('')
+      } else {
+        await finishInterview()
+      }
+    } catch (error) {
+      console.error('Error submitting answer:', error)
+      toast({
+        title: "Error",
+        description: "Failed to submit answer. Please try again.",
+        variant: "destructive"
+      })
     }
-    
-    if (currentQuestionIndex < currentSession.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1)
-      setAnswer('')
-    } else {
-      finishInterview()
-    }
-  }, [currentSession, user, answer, timeRemaining, currentQuestionIndex, submitAnswer, finishInterview])
+  }, [currentSession, user, answer, timeRemaining, currentQuestionIndex, submitAnswer, finishInterview, toast])
 
   useEffect(() => {
     if (currentSession && currentQuestionIndex < currentSession.questions.length) {
@@ -107,7 +172,7 @@ export default function MockInterviewPage() {
     if (!user) return
     
     try {
-      const session = await createMockSession(user.id, selectedDomain, selectedDifficulty)
+      const session = await createMockSession(selectedDomain, selectedDifficulty)
       setCurrentSession(session)
       setCurrentQuestionIndex(0)
       setAnswer('')
@@ -120,9 +185,10 @@ export default function MockInterviewPage() {
         description: `${selectedDomain} - ${selectedDifficulty} level`
       })
     } catch (error) {
+      console.error('Error starting mock interview:', error)
       toast({
         title: "Error",
-        description: "Failed to start mock interview",
+        description: "Failed to start mock interview. Please try again.",
         variant: "destructive"
       })
     }
@@ -325,9 +391,9 @@ export default function MockInterviewPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Domain</label>
-                <Select value={selectedDomain} onValueChange={setSelectedDomain}>
+                <Select value={selectedDomain} onValueChange={setSelectedDomain} disabled={domainsLoading}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select interview domain" />
+                    <SelectValue placeholder={domainsLoading ? "Loading domains..." : "Select interview domain"} />
                   </SelectTrigger>
                   <SelectContent>
                     {domains.map(domain => (
@@ -364,12 +430,12 @@ export default function MockInterviewPage() {
 
             <Button 
               onClick={startNewSession}
-              disabled={!selectedDomain || !selectedDifficulty}
+              disabled={!selectedDomain || !selectedDifficulty || domainsLoading}
               size="lg"
               className="w-full hero-button"
             >
               <Play className="h-5 w-5 mr-2" />
-              Start Mock Interview
+              {domainsLoading ? "Loading..." : "Start Mock Interview"}
             </Button>
           </CardContent>
         </Card>

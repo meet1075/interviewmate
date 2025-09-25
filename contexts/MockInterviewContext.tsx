@@ -37,9 +37,11 @@ export interface MockSession {
 
 interface MockInterviewContextType {
   sessions: MockSession[]
-  createMockSession: (userId: string, domain: string, difficulty: string) => Promise<MockSession>
-  submitAnswer: (sessionId: string, questionId: string, answer: string, timeSpent: number) => MockAnswer
-  completeMockSession: (sessionId: string) => MockSession | undefined
+  currentSession: MockSession | null
+  createMockSession: (domain: string, difficulty: string) => Promise<MockSession>
+  submitAnswer: (sessionId: string, questionId: string, answer: string, timeSpent: number) => Promise<MockAnswer>
+  completeMockSession: (sessionId: string) => Promise<any>
+  getSession: (sessionId: string) => Promise<MockSession>
   getUserSessions: (userId: string) => MockSession[]
   getTotalPoints: (userId: string) => number
   getUserRank: (userId: string, domain?: string) => number
@@ -148,6 +150,7 @@ const generateRating = (answer: string, difficulty: string): { rating: number; f
 // --- Provider Component ---
 export function MockInterviewProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<MockSession[]>([])
+  const [currentSession, setCurrentSession] = useState<MockSession | null>(null)
 
   useEffect(() => {
     // Load from localStorage only on the client side
@@ -168,86 +171,177 @@ export function MockInterviewProvider({ children }: { children: ReactNode }) {
     }
   }, [sessions])
 
-  const generateQuestions = (domain: string, difficulty: string): MockQuestion[] => {
-    const domainQuestions = mockQuestions[domain as keyof typeof mockQuestions]
-    if (!domainQuestions) return []
-    
-    const difficultyQuestions = domainQuestions[difficulty as keyof typeof domainQuestions] || []
-    
-    const shuffled = [...difficultyQuestions].sort(() => 0.5 - Math.random())
-    return shuffled.slice(0, 5).map((q, index) => ({
-      id: `${domain.replace(/\s/g, '')}-${difficulty}-${index + 1}`,
-      ...q,
-      domain,
-      difficulty: difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
-    }))
-  }
+  const createMockSession = async (domain: string, difficulty: string): Promise<MockSession> => {
+    try {
+      console.log("Creating mock session:", { domain, difficulty });
+      
+      const response = await fetch('/api/mockinterview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ domain, difficulty }),
+      });
 
-  const createMockSession = async (userId: string, domain: string, difficulty: string): Promise<MockSession> => {
-    const questions = generateQuestions(domain, difficulty)
-    
-    const newSession: MockSession = {
-      id: `mock-${Date.now()}`,
-      userId,
-      domain,
-      difficulty: difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
-      questions,
-      answers: [],
-      startTime: new Date().toISOString(),
-      overallRating: 0,
-      overallFeedback: '',
-      pointsEarned: 0,
-      status: 'active'
-    }
-    
-    setSessions(prev => [...prev, newSession])
-    return newSession
-  }
-
-  const submitAnswer = (sessionId: string, questionId: string, answer: string, timeSpent: number): MockAnswer => {
-    const session = sessions.find(s => s.id === sessionId)
-    if (!session) throw new Error('Session not found')
-    
-    const { rating, feedback } = generateRating(answer, session.difficulty)
-    
-    const mockAnswer: MockAnswer = { questionId, answer, rating, feedback, timeSpent }
-    
-    setSessions(prev => prev.map(s => 
-      s.id === sessionId 
-        ? { ...s, answers: [...s.answers, mockAnswer] }
-        : s
-    ))
-    
-    return mockAnswer
-  }
-
-  const completeMockSession = (sessionId: string): MockSession | undefined => {
-    let completedSession : MockSession | undefined = undefined;
-    
-    setSessions(prev => prev.map(s => {
-      if (s.id === sessionId) {
-        const averageRating = s.answers.reduce((sum, a) => sum + a.rating, 0) / (s.answers.length || 1);
-        const pointsEarned = Math.round(averageRating * 10)
-        
-        let overallFeedback = 'Review your answers to see areas for improvement.'
-        if (averageRating >= 8) overallFeedback = 'Excellent performance! You demonstrated strong technical knowledge.'
-        else if (averageRating >= 6) overallFeedback = 'Good performance overall. Focus on providing more detailed examples.'
-        
-        completedSession = {
-          ...s,
-          endTime: new Date().toISOString(),
-          overallRating: parseFloat(averageRating.toFixed(1)),
-          overallFeedback,
-          pointsEarned,
-          status: 'completed' as const
-        }
-        return completedSession;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create mock session: ${errorText}`);
       }
-      return s;
-    }));
-    
-    return completedSession;
-  }
+
+      const data = await response.json();
+      console.log("Mock session created:", data);
+
+      const newSession: MockSession = {
+        id: data.sessionId,
+        userId: data.userId,
+        domain: data.domain,
+        difficulty: data.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
+        questions: data.questions,
+        answers: [],
+        startTime: new Date().toISOString(),
+        overallRating: 0,
+        overallFeedback: '',
+        pointsEarned: 0,
+        status: 'active'
+      };
+
+      setCurrentSession(newSession);
+      setSessions(prev => [...prev, newSession]);
+      return newSession;
+    } catch (error) {
+      console.error("Error creating mock session:", error);
+      throw error;
+    }
+  };
+
+  const submitAnswer = async (sessionId: string, questionId: string, answer: string, timeSpent: number): Promise<MockAnswer> => {
+    try {
+      console.log("Submitting answer:", { sessionId, questionId, timeSpent });
+
+      const response = await fetch(`/api/mockinterview/${sessionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ questionId, answer, timeSpent }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit answer: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("Answer submitted:", data);
+
+      const mockAnswer: MockAnswer = {
+        questionId,
+        answer,
+        rating: data.rating,
+        feedback: data.feedback,
+        timeSpent
+      };
+
+      // Update local session
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId 
+          ? { ...s, answers: [...s.answers, mockAnswer] }
+          : s
+      ));
+
+      if (currentSession?.id === sessionId) {
+        setCurrentSession(prev => prev ? { ...prev, answers: [...prev.answers, mockAnswer] } : null);
+      }
+
+      return mockAnswer;
+    } catch (error) {
+      console.error("Error submitting answer:", error);
+      throw error;
+    }
+  };
+
+  const completeMockSession = async (sessionId: string): Promise<any> => {
+    try {
+      console.log("Completing mock session:", sessionId);
+
+      const response = await fetch(`/api/mockinterview/${sessionId}/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to complete mock session: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("Mock session completed:", data);
+
+      // Update local session
+      const completedSession: MockSession = {
+        id: sessionId,
+        userId: data.userId || currentSession?.userId || '',
+        domain: data.domain || currentSession?.domain || '',
+        difficulty: (data.difficulty as 'Beginner' | 'Intermediate' | 'Advanced') || currentSession?.difficulty || 'Beginner',
+        questions: data.questions || currentSession?.questions || [],
+        answers: data.individualAnswers || currentSession?.answers || [],
+        startTime: currentSession?.startTime || new Date().toISOString(),
+        endTime: new Date().toISOString(),
+        overallRating: data.overallRating,
+        overallFeedback: data.overallFeedback,
+        pointsEarned: Math.round(data.overallRating * 10),
+        status: 'completed'
+      };
+
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId ? completedSession : s
+      ));
+
+      setCurrentSession(null);
+      return data;
+    } catch (error) {
+      console.error("Error completing mock session:", error);
+      throw error;
+    }
+  };
+
+  const getSession = async (sessionId: string): Promise<MockSession> => {
+    try {
+      console.log("Getting session:", sessionId);
+
+      const response = await fetch(`/api/mockinterview/${sessionId}/get`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to get session: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("Session retrieved:", data);
+
+      const session: MockSession = {
+        id: data.sessionId,
+        userId: data.userId || '',
+        domain: data.domain,
+        difficulty: data.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
+        questions: data.questions,
+        answers: data.answers || [],
+        startTime: data.createdAt,
+        overallRating: 0,
+        overallFeedback: '',
+        pointsEarned: 0,
+        status: 'active'
+      };
+
+      setCurrentSession(session);
+      return session;
+    } catch (error) {
+      console.error("Error getting session:", error);
+      throw error;
+    }
+  };
 
   const getUserSessions = (userId: string): MockSession[] => {
     return sessions.filter(s => s.userId === userId)
@@ -276,9 +370,11 @@ export function MockInterviewProvider({ children }: { children: ReactNode }) {
   return (
     <MockInterviewContext.Provider value={{
       sessions,
+      currentSession,
       createMockSession,
       submitAnswer,
       completeMockSession,
+      getSession,
       getUserSessions,
       getTotalPoints,
       getUserRank
