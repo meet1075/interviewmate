@@ -20,16 +20,28 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     // 2. Connect to the database
     await connectDb();
     
-    // 3. Find the user in the database
-    const user = await User.findOne({ clerkId: userId });
-    if (!user) {
+    // 3. Find the authenticated user in the database
+    const authenticatedUser = await User.findOne({ clerkId: userId });
+    if (!authenticatedUser) {
       return new NextResponse("User not found", { status: 404 });
     }
 
-    // Verify that the requested user ID matches the authenticated user
-    if (id !== userId && id !== user._id.toString()) {
+    // 4. Find the target user (the one whose dashboard we want to view)
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return new NextResponse("Target user not found", { status: 404 });
+    }
+
+    // 5. Check permissions: user can view their own dashboard OR admin can view any dashboard
+    const isOwnDashboard = id === userId || id === authenticatedUser._id.toString();
+    const isAdmin = authenticatedUser.role === 'admin';
+    
+    if (!isOwnDashboard && !isAdmin) {
       return new NextResponse("Forbidden", { status: 403 });
     }
+
+    // Use the target user for dashboard data (not the authenticated user)
+    const user = targetUser;
 
     console.log("Fetching dashboard data for user:", user.email);
 

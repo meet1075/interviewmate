@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
+import { ExternalLink } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -283,7 +284,14 @@ export default function ManageUsersPage() {
                             <span className="text-sm font-medium text-primary-foreground">{u.name.charAt(0)}</span>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="font-medium truncate">{u.name}</div>
+                            <div 
+                              className="font-medium truncate text-blue-600 hover:text-blue-800 cursor-pointer hover:underline transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/10 px-1 py-0.5 rounded flex items-center space-x-1 group"
+                              onClick={() => router.push(`/admin/user-dashboard?userId=${u.id}`)}
+                              title="Click to view user's dashboard"
+                            >
+                              <span className="truncate">{u.name}</span>
+                              <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                            </div>
                             <div className="text-sm text-muted-foreground truncate">{u.email}</div>
                           </div>
                         </div>
