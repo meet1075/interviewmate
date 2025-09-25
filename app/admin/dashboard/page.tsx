@@ -9,74 +9,151 @@ import {
   AlertTriangle,
   BarChart3,
   Activity,
-  Star
+  Star,
+  MessageSquare,
+  Brain,
+  UserCheck
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { useAdmin } from "@/contexts/AdminContext"
 import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { useToast } from "@/components/ui/use-toast"
+
+// Define interfaces for the API response
+interface DashboardStats {
+  totalUsers: number;
+  usersRegisteredToday: number;
+  totalQuestionsGenerated: number;
+  questionsGeneratedToday: number;
+  totalMockInterviews: number;
+  mockInterviewsCompletedToday: number;
+}
+
+interface DomainStat {
+  domain: string;
+  mockInterviews: number;
+  practiceSessions: number;
+  uniqueUsersCount: number;
+}
+
+interface TodaysSummary {
+  newRegistrations: number;
+  questionsGenerated: number;
+  mockInterviewsCompleted: number;
+  totalActiveUsers: number;
+}
+
+interface DashboardData {
+  stats: DashboardStats;
+  domainStats: DomainStat[];
+  todaysSummary: TodaysSummary;
+}
 
 export default function AdminDashboard() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const { users, domains, getTodayStats } = useAdmin()
-  const todayStats = getTodayStats()
+  const { toast } = useToast();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   
-  // Redirect if not an admin
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/admin/dashboard');
+      
+      if (!response.ok) {
+        if (response.status === 403) {
+          toast({ title: "Error", description: "Unauthorized access", variant: "destructive" });
+          router.push('/');
+          return;
+        }
+        throw new Error('Failed to fetch dashboard data');
+      }
+      
+      const data = await response.json();
+      setDashboardData(data);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({ title: "Error", description: "Failed to load dashboard data", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Set up auto-refresh every 24 hours (86400000 ms)
+  useEffect(() => {
+    if (dashboardData) {
+      const refreshInterval = setInterval(() => {
+        fetchDashboardData();
+      }, 24 * 60 * 60 * 1000); // 24 hours
+
+      return () => clearInterval(refreshInterval);
+    }
+  }, [dashboardData]);
+
+  // Redirect if not an admin and fetch data
   useEffect(() => {
     if (isLoaded && user?.publicMetadata?.role !== 'admin') {
       router.push('/');
+      return;
+    }
+    
+    if (isLoaded && user?.publicMetadata?.role === 'admin') {
+      fetchDashboardData();
     }
   }, [isLoaded, user, router]);
 
-  if (!isLoaded || user?.publicMetadata?.role !== 'admin') {
-      return <div className="container py-8 text-center"><p>Loading or Access Denied...</p></div>
+  if (!isLoaded || loading) {
+    return <div className="container py-8 text-center"><p>Loading...</p></div>;
   }
+
+  if (user?.publicMetadata?.role !== 'admin') {
+    return <div className="container py-8 text-center"><p>Access Denied</p></div>;
+  }
+
+  if (!dashboardData) {
+    return <div className="container py-8 text-center"><p>Failed to load dashboard data</p></div>;
+  }
+
+  const { stats, domainStats, todaysSummary } = dashboardData;
   
   const platformStats = [
     {
       title: "Total Users",
-      value: users.length.toString(),
-      change: `${users.filter(u => u.status === 'active').length} active users`, 
+      value: stats.totalUsers.toString(),
+      change: `${stats.usersRegisteredToday} registered today`, 
       icon: Users,
       color: "text-primary"
     },
     {
       title: "Today's Activity",
-      value: todayStats.activeUsers.toString(),
-      change: `${todayStats.newRegistrations} new registrations`,
+      value: stats.usersRegisteredToday.toString(),
+      change: "new registrations today",
       icon: Activity,
       color: "text-success"
     },
     {
       title: "Questions Generated",
-      value: domains.reduce((sum, d) => sum + d.questionsGenerated, 0).toString(),
-      change: `${todayStats.questionsPracticed} practiced today`,
+      value: stats.totalQuestionsGenerated.toString(),
+      change: `${stats.questionsGeneratedToday} generated today`,
       icon: BookOpen,
       color: "text-warning"
     },
     {
       title: "Mock Interviews",
-      value: todayStats.mockInterviews.toString(),
-      change: "completed today",
+      value: stats.totalMockInterviews.toString(),
+      change: `${stats.mockInterviewsCompletedToday} completed today`,
       icon: Star,
       color: "text-accent-foreground"
     }
   ]
-
-  const domainStats = domains.map(domain => ({
-    domain: domain.name,
-    questions: domain.questionsGenerated,
-    users: users.filter(u => 
-      u.practiceHistory.some(p => p.domain === domain.name) ||
-      u.mockInterviewStats.some(m => m.domain === domain.name)
-    ).length,
-    completion: Math.round(domain.averageRating * 10) // Convert rating to percentage
-  }))
 
   return (
     <div className="container py-8 space-y-8 px-10">
@@ -84,17 +161,21 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Monitor and manage the InterviewMate platform</p>
+          <p className="text-muted-foreground">
+            Monitor and manage the InterviewMate platform
+            {lastUpdated && (
+              <span className="block text-xs mt-1">
+                Last updated: {lastUpdated.toLocaleString()}
+              </span>
+            )}
+          </p>
         </div>
-        {/* <div className="flex items-center space-x-2">
-          <Button variant="outline">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Export Report
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={fetchDashboardData} disabled={loading}>
+            <Activity className="h-4 w-4 mr-2" />
+            {loading ? 'Refreshing...' : 'Refresh Data'}
           </Button>
-          <Button className="hero-button">
-            Platform Settings
-          </Button>
-        </div> */}
+        </div>
       </div>
 
       {/* Platform Stats */}
@@ -125,22 +206,44 @@ export default function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Domain Performance</CardTitle>
-              <CardDescription>Question usage and user engagement by domain</CardDescription>
+              <CardDescription>Mock interviews, practice sessions, and user engagement by domain</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {domainStats.map((domain) => (
+              {domainStats.length > 0 ? domainStats.map((domain) => (
                 <div key={domain.domain} className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{domain.domain}</span>
                     <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <span>{domain.questions} questions</span>
-                      <span>{domain.users} users</span>
-                      <Badge variant="secondary">{domain.completion}%</Badge>
+                      <span>{domain.mockInterviews} mock interviews</span>
+                      <span>{domain.practiceSessions} practice sessions</span>
+                      <span>{domain.uniqueUsersCount} users</span>
                     </div>
                   </div>
-                  <Progress value={domain.completion} className="h-2" />
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center">
+                      <Brain className="h-4 w-4 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
+                      <div className="font-semibold text-blue-700 dark:text-blue-300">{domain.mockInterviews}</div>
+                      <div className="text-blue-600 dark:text-blue-400">Mock Interviews</div>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-center">
+                      <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400 mx-auto mb-1" />
+                      <div className="font-semibold text-green-700 dark:text-green-300">{domain.practiceSessions}</div>
+                      <div className="text-green-600 dark:text-green-400">Practice Sessions</div>
+                    </div>
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg text-center">
+                      <UserCheck className="h-4 w-4 text-purple-600 dark:text-purple-400 mx-auto mb-1" />
+                      <div className="font-semibold text-purple-700 dark:text-purple-300">{domain.uniqueUsersCount}</div>
+                      <div className="text-purple-600 dark:text-purple-400">Unique Users</div>
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No domain data available yet.</p>
+                  <p className="text-sm">Data will appear once users start using the platform.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -155,19 +258,19 @@ export default function AdminDashboard() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm">New Registrations</span>
-                  <span className="font-medium">{todayStats.newRegistrations}</span>
+                  <span className="font-medium">{todaysSummary.newRegistrations}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Questions Practiced</span>
-                  <span className="font-medium">{todayStats.questionsPracticed}</span>
+                  <span className="text-sm">Questions Generated</span>
+                  <span className="font-medium">{todaysSummary.questionsGenerated}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Mock Interviews</span>
-                  <span className="font-medium">{todayStats.mockInterviews}</span>
+                  <span className="text-sm">Mock Interviews Completed</span>
+                  <span className="font-medium">{todaysSummary.mockInterviewsCompleted}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm">Active Users</span>
-                  <span className="font-medium">{todayStats.activeUsers}</span>
+                  <span className="text-sm">Total Active Users</span>
+                  <span className="font-medium">{todaysSummary.totalActiveUsers}</span>
                 </div>
               </div>
             </CardContent>
