@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit, Trash2, MoreHorizontal } from "lucide-react"
+import { Plus, Edit, Trash2, MoreHorizontal, HelpCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
@@ -18,8 +18,7 @@ import { useToast } from "@/components/ui/use-toast"
 export interface DomainData { 
   _id: string; 
   name: string; 
-  questionsCount: number; 
-  activeUsers: number; 
+  questionsCount: number; // Total questions from both mock interviews and practice sessions
   status: "active" | "inactive";
   createdAt: string;
   updatedAt: string;
@@ -212,7 +211,7 @@ export default function ManageDomainsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Manage Domains</h1>
-          <p className="text-muted-foreground">Organize interview questions by subject areas</p>
+          <p className="text-muted-foreground">Organize interview questions by subject areas for mock interviews and practice sessions</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
@@ -237,7 +236,7 @@ export default function ManageDomainsPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Domains</CardTitle>
-          <CardDescription>View and manage all available interview domains.</CardDescription>
+          <CardDescription>View and manage all available interview domains with combined question counts from mock interviews and practice sessions.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -251,8 +250,14 @@ export default function ManageDomainsPage() {
                   <TableRow>
                     <TableHead>Domain</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Questions</TableHead>
-                    <TableHead>Active Users</TableHead>
+                    <TableHead>
+                      <div className="flex items-center space-x-1">
+                        <span>Total Questions</span>
+                        <div title="Includes questions from both mock interviews and practice sessions">
+                          <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                        </div>
+                      </div>
+                    </TableHead>
                     <TableHead className="w-[50px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -276,7 +281,6 @@ export default function ManageDomainsPage() {
                         </div>
                       </TableCell>
                       <TableCell>{domain.questionsCount.toLocaleString()}</TableCell>
-                      <TableCell>{domain.activeUsers.toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                           <DropdownMenu>
                               <DropdownMenuTrigger asChild>

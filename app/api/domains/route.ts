@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import connectDb from "@/dbconfig/db";
 import Domain from "@/models/domain.model";
+import Question from "@/models/question.model";
+import PracticeSession, { MockSession } from "@/models/practicesession.model";
 
 // --- GET ALL DOMAINS ---
 export async function GET(request: Request) {
@@ -18,7 +20,34 @@ export async function GET(request: Request) {
         // 3. Fetch all domains, sorted by the newest first
         const domains = await Domain.find({}).sort({ createdAt: -1 });
 
-        return NextResponse.json(domains);
+        // 4. Calculate real question counts for each domain
+        const domainsWithCounts = await Promise.all(domains.map(async (domain) => {
+            // Count questions from Question model for this domain
+            const practiceQuestionsCount = await Question.countDocuments({ domain: domain.name });
+            
+            // Count unique questions used in mock interviews for this domain
+            const mockInterviewQuestions = await MockSession.aggregate([
+                { $match: { domain: domain.name } },
+                { $unwind: '$questions' },
+                { $group: { _id: '$questions.id' } }
+            ]);
+            
+            const mockQuestionsCount = mockInterviewQuestions.length;
+            
+            // Total questions = practice questions + unique mock interview questions
+            const totalQuestionsCount = practiceQuestionsCount + mockQuestionsCount;
+            
+            return {
+                _id: domain._id,
+                name: domain.name,
+                questionsCount: totalQuestionsCount,
+                status: domain.status,
+                createdAt: domain.createdAt,
+                updatedAt: domain.updatedAt
+            };
+        }));
+
+        return NextResponse.json(domainsWithCounts);
 
     } catch (error) {
         console.error("[DOMAINS_GET_ERROR]", error);
