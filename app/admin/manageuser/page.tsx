@@ -27,8 +27,8 @@ export interface AdminUser {
   joinDate: string;
   lastActive: string;
   sessionsCompleted: number;
-  averageScore: number;
-  totalPoints: number;
+  averageScore: number; // Percentage based on total points earned vs max possible
+  totalPoints: number; // Total rating points from all completed sessions
   badges: string[];
   bookmarkedQuestions: string[];
 }
@@ -294,8 +294,8 @@ export default function ManageUsersPage() {
                       <TableCell className="w-[120px]">
                         {u.role === 'user' ? (
                           <div className="text-sm">
-                            <div className="font-medium">{u.averageScore}% avg</div>
-                            <div className="text-muted-foreground">{u.sessionsCompleted} sessions</div>
+                            <div className="font-medium">{u.averageScore}% score</div>
+                            <div className="text-muted-foreground">{u.sessionsCompleted} mock interviews</div>
                           </div>
                         ) : (
                           <div className="text-sm text-muted-foreground">N/A</div>

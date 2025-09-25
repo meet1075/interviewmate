@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import connectDb from "@/dbconfig/db";
 import User from "@/models/user.model";
+import { MockSession } from "@/models/practicesession.model";
 
 // --- GET ALL USERS WITH SEARCH AND FILTER OPTIONS ---
 export async function GET(request: Request) {
@@ -64,28 +65,75 @@ export async function GET(request: Request) {
         const activeCount = await User.countDocuments({ status: 'active' });
         const suspendedCount = await User.countDocuments({ status: 'suspended' });
 
-        // 9. Format response with user data and metadata
+        // 9. Get mock interview session statistics for all users
+        const userIds = users.map(user => user._id);
+        const sessionStats = await MockSession.aggregate([
+            {
+                $match: { 
+                    userId: { $in: userIds },
+                    completedAt: { $exists: true, $ne: null } // Only completed sessions
+                }
+            },
+            {
+                $group: {
+                    _id: '$userId',
+                    totalSessions: { $sum: 1 },
+                    totalRating: { $sum: '$overallRating' },
+                    averageRating: { $avg: '$overallRating' }
+                }
+            }
+        ]);
+
+        // Create a map for quick lookup
+        const statsMap = new Map();
+        sessionStats.forEach(stat => {
+            // Ensure ratings are within expected bounds (1-10 per session)
+            const clampedAverageRating = Math.min(Math.max(stat.averageRating || 0, 0), 10);
+            const clampedTotalRating = Math.min(stat.totalRating || 0, stat.totalSessions * 10);
+            
+            statsMap.set(stat._id.toString(), {
+                sessionsCompleted: stat.totalSessions,
+                totalRating: clampedTotalRating,
+                averageRating: clampedAverageRating
+            });
+        });
+
+        // 10. Format response with user data and metadata
         const response = {
-            users: users.map(user => ({
-                id: user._id,
-                clerkId: user.clerkId,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-                userName: user.userName,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                profileImage: user.profileImage,
-                role: user.role,
-                status: user.status,
-                joinDate: user.createdAt,
-                lastActive: user.updatedAt,
-                // Mock some fields that are in your AdminContext but not in User model
-                sessionsCompleted: Math.floor(Math.random() * 50) + 1,
-                averageScore: Math.floor(Math.random() * 40) + 60,
-                totalPoints: Math.floor(Math.random() * 5000) + 500,
-                badges: user.role === 'admin' ? ['Admin'] : ['User'],
-                bookmarkedQuestions: user.bookmarkedQuestions || []
-            })),
+            users: users.map((user: any) => {
+                const userStats = statsMap.get(user._id.toString()) || {
+                    sessionsCompleted: 0,
+                    totalRating: 0,
+                    averageRating: 0
+                };
+
+                // Calculate percentage based on average rating (1-10 scale)
+                // Convert average rating to percentage (10 = 100%, 5 = 50%, etc.)
+                const averagePercentage = userStats.sessionsCompleted > 0 
+                    ? Math.round((userStats.averageRating / 10) * 100)
+                    : 0;
+
+                return {
+                    id: user._id,
+                    clerkId: user.clerkId,
+                    name: `${user.firstName} ${user.lastName}`,
+                    email: user.email,
+                    userName: user.userName,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    profileImage: user.profileImage,
+                    role: user.role,
+                    status: user.status,
+                    joinDate: user.createdAt,
+                    lastActive: user.updatedAt,
+                    // Real data from mock interview sessions
+                    sessionsCompleted: userStats.sessionsCompleted,
+                    averageScore: averagePercentage,
+                    totalPoints: userStats.totalRating,
+                    badges: user.role === 'admin' ? ['Admin'] : ['User'],
+                    bookmarkedQuestions: user.bookmarkedQuestions || []
+                };
+            }),
             pagination: {
                 currentPage: page,
                 totalPages: Math.ceil(totalUsers / limit),
