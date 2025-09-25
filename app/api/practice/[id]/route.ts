@@ -1,0 +1,119 @@
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import connectDb from "@/dbconfig/db";
+import User from "@/models/user.model";
+import PracticeSession from "@/models/practicesession.model";
+
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    // Await params before using its properties
+    const { id } = await params;
+    console.log("Update practice session API called for session:", id);
+    
+    // 1. Authenticate the user
+    const { userId } = await auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // 2. Connect to the database
+    await connectDb();
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+
+    // 3. Get update data from request body
+    const { completedQuestions, currentQuestionIndex } = await request.json();
+
+    // 4. Find and update the practice session
+    const session = await PracticeSession.findOneAndUpdate(
+      { _id: id, user: user._id },
+      {
+        $set: {
+          completedQuestions: completedQuestions,
+          currentQuestionIndex: currentQuestionIndex,
+          updatedAt: new Date()
+        }
+      },
+      { new: true }
+    ).populate('questions');
+
+    if (!session) {
+      return new NextResponse("Practice session not found", { status: 404 });
+    }
+
+    console.log("Practice session updated:", session._id);
+
+    return NextResponse.json({
+      message: "Practice session updated successfully",
+      session: {
+        id: session._id,
+        completedQuestions: session.completedQuestions,
+        totalQuestions: session.totalQuestions,
+        currentQuestionIndex: session.currentQuestionIndex || 0
+      }
+    });
+
+  } catch (error) {
+    console.error("[UPDATE_PRACTICE_SESSION_ERROR]", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    // Await params before using its properties
+    const { id } = await params;
+    console.log("Get practice session API called for session:", id);
+    
+    // 1. Authenticate the user
+    const { userId } = await auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // 2. Connect to the database
+    await connectDb();
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+
+    // 3. Find the practice session
+    const session = await PracticeSession.findOne({ _id: id, user: user._id })
+      .populate('questions');
+
+    if (!session) {
+      return new NextResponse("Practice session not found", { status: 404 });
+    }
+
+    console.log("Practice session found:", session._id);
+
+    // 4. Transform to frontend format
+    const sessionData = {
+      id: session._id,
+      domain: session.domain,
+      difficulty: session.difficulty,
+      questions: session.questions.map((q: any) => ({
+        id: q._id,
+        title: q.title,
+        description: q.description,
+        answer: q.answer,
+        hints: q.hints,
+        domain: q.domain,
+        difficulty: q.difficulty
+      })),
+      currentQuestionIndex: session.currentQuestionIndex || 0,
+      startTime: session.createdAt,
+      completedQuestions: session.completedQuestions,
+      totalQuestions: session.totalQuestions
+    };
+
+    return NextResponse.json(sessionData);
+
+  } catch (error) {
+    console.error("[GET_PRACTICE_SESSION_ERROR]", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}

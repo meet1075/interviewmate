@@ -3,19 +3,17 @@ import { auth } from "@clerk/nextjs/server";
 import connectDb from "@/dbconfig/db";
 import User from "@/models/user.model";
 
-interface Params {
-    params: { id: string };
-}
-
 // --- UPDATE A USER'S STATUS OR ROLE ---
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        // Await params before using its properties
+        const { id } = await params;
+        
         const { sessionClaims } = await auth();
         if (sessionClaims?.metadata?.role !== 'admin') {
             return new NextResponse("Unauthorized", { status: 403 });
         }
 
-        const { id } = params;
         const values = await request.json();
 
         // Validate the update values (only allow active and suspended)

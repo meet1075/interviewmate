@@ -3,21 +3,18 @@ import { auth } from "@clerk/nextjs/server";
 import connectDb from "@/dbconfig/db";
 import Domain from "@/models/domain.model";
 
-// Define the shape of the route parameters
-interface Params {
-    params: { id: string };
-}
-
 // --- UPDATE A DOMAIN (NAME OR STATUS) ---
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        // Await params before using its properties
+        const { id } = await params;
+        
         // 1. Authenticate and authorize the user as an admin
-        const { sessionClaims } =await auth();
+        const { sessionClaims } = await auth();
         if (sessionClaims?.metadata?.role !== 'admin') {
             return new NextResponse("Unauthorized", { status: 403 });
         }
 
-        const { id } = params;
         const values = await request.json(); // e.g., { name: "New Name" } or { status: "inactive" }
 
         await connectDb();
@@ -38,15 +35,16 @@ export async function PATCH(request: Request, { params }: Params) {
 
 
 // --- DELETE A DOMAIN ---
-export async function DELETE(request: Request, { params }: Params) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        // Await params before using its properties
+        const { id } = await params;
+        
         // 1. Authenticate and authorize the user as an admin
         const { sessionClaims } = await auth();
         if (sessionClaims?.metadata?.role !== 'admin') {
             return new NextResponse("Unauthorized", { status: 403 });
         }
-
-        const { id } = params;
         
         await connectDb();
         

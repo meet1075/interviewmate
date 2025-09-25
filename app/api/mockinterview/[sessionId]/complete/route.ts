@@ -12,9 +12,11 @@ const client = new OpenAI({
   baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
 });
 
-export async function POST(request: Request, { params }: { params: { sessionId: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
-    console.log("Complete session API called for session:", params.sessionId);
+    // Await params before using its properties
+    const { sessionId } = await params;
+    console.log("Complete session API called for session:", sessionId);
     
     // 1. Authenticate the user
     const { userId } = await auth();
@@ -29,8 +31,32 @@ export async function POST(request: Request, { params }: { params: { sessionId: 
       return new NextResponse("User not found", { status: 404 });
     }
 
-    // 3. Get the session from memory
-    const session = sessionStorage.get(params.sessionId);
+    // 3. Get the session from database first, then try memory as fallback
+    let session;
+    
+    // First, try to get from database using sessionId
+    try {
+      const dbSession = await MockSession.findOne({ sessionId: sessionId });
+      if (dbSession) {
+        console.log("Session found in database for completion");
+        session = {
+          questions: dbSession.questions,
+          answers: dbSession.answers || [],
+          domain: dbSession.domain,
+          difficulty: dbSession.difficulty,
+          userId: dbSession.userId
+        };
+      }
+    } catch (dbError) {
+      console.log("Database lookup failed, trying memory:", dbError);
+    }
+    
+    // Fallback to memory storage
+    if (!session) {
+      console.log("Trying memory storage as fallback for completion");
+      session = sessionStorage.get(sessionId);
+    }
+    
     if (!session) {
       return new NextResponse("Session not found", { status: 404 });
     }
@@ -102,31 +128,53 @@ export async function POST(request: Request, { params }: { params: { sessionId: 
 
     const overallFeedback = JSON.parse(response.choices[0].message.content || '{}');
 
-    // 6. Save the session to database
-    const mockSession = new MockSession({
-      userId: user._id,
-      domain: session.domain,
-      difficulty: session.difficulty,
-      questions: session.questions,
-      answers: session.answers,
-      overallRating: averageRating,
-      totalTimeSpent: totalTimeSpent,
-      overallFeedback: overallFeedback.overallFeedback || "Session completed successfully",
-      strengths: overallFeedback.strengths || [],
-      improvements: overallFeedback.improvements || [],
-      recommendations: overallFeedback.recommendations || [],
-      completedAt: new Date()
-    });
-
-    await mockSession.save();
+    // 6. Update the existing session in database instead of creating a new one
+    try {
+      await MockSession.findOneAndUpdate(
+        { sessionId: sessionId },
+        {
+          $set: {
+            overallRating: averageRating,
+            totalTimeSpent: totalTimeSpent,
+            overallFeedback: overallFeedback.overallFeedback || "Session completed successfully",
+            strengths: overallFeedback.strengths || [],
+            improvements: overallFeedback.improvements || [],
+            recommendations: overallFeedback.recommendations || [],
+            completedAt: new Date()
+          }
+        },
+        { new: true }
+      );
+      console.log("Session completion data updated in database");
+    } catch (updateError) {
+      console.error("Failed to update session completion in database:", updateError);
+      // If update fails, create a new completed session record
+      const mockSession = new MockSession({
+        sessionId: sessionId + "_completed", // Add suffix to avoid duplicate
+        userId: user._id,
+        domain: session.domain,
+        difficulty: session.difficulty,
+        questions: session.questions,
+        answers: session.answers,
+        overallRating: averageRating,
+        totalTimeSpent: totalTimeSpent,
+        overallFeedback: overallFeedback.overallFeedback || "Session completed successfully",
+        strengths: overallFeedback.strengths || [],
+        improvements: overallFeedback.improvements || [],
+        recommendations: overallFeedback.recommendations || [],
+        completedAt: new Date()
+      });
+      await mockSession.save();
+      console.log("Created new completed session record");
+    }
 
     // 7. Clean up session from memory
-    sessionStorage.delete(params.sessionId);
+    sessionStorage.delete(sessionId);
 
     console.log("Session completed and saved to database");
 
     return NextResponse.json({
-      sessionId: params.sessionId,
+      sessionId: sessionId,
       overallRating: Math.round(averageRating * 10) / 10,
       totalQuestions: totalQuestions,
       answeredQuestions: answeredQuestions,

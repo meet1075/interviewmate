@@ -10,6 +10,7 @@ const practiceSessionSchema = new Schema({
   difficulty: { type: String, required: true },
   totalQuestions: { type: Number, default: 10 },
   completedQuestions: { type: Number, default: 0 },
+  currentQuestionIndex: { type: Number, default: 0 },
   questions: [{
     type: Schema.Types.ObjectId,
     ref: 'Question'
@@ -18,6 +19,7 @@ const practiceSessionSchema = new Schema({
 
 // Mock Session Schema for AI-powered interview sessions
 const mockSessionSchema = new Schema({
+  sessionId: { type: String, required: true, unique: true }, // Add custom sessionId field
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
@@ -53,6 +55,10 @@ const mockSessionSchema = new Schema({
   recommendations: [String],
   completedAt: Date
 }, { timestamps: true });
+
+// Add indexes for better query performance
+mockSessionSchema.index({ sessionId: 1 }, { unique: true });
+mockSessionSchema.index({ userId: 1, createdAt: -1 });
 
 const PracticeSession = models?.PracticeSession || model("PracticeSession", practiceSessionSchema);
 const MockSession = models?.MockSession || model("MockSession", mockSessionSchema);

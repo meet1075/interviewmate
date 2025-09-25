@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { OpenAI } from "openai";
 import connectDb from "@/dbconfig/db";
 import User from "@/models/user.model";
+import { MockSession } from "@/models/practicesession.model";
 import sessionStorage from "@/utils/sessionStorage";
 
 // Initialize the AI client
@@ -11,9 +12,11 @@ const client = new OpenAI({
   baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
 });
 
-export async function POST(request: Request, { params }: { params: { sessionId: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
-    console.log("Submit answer API called for session:", params.sessionId);
+    // Await params before using its properties
+    const { sessionId } = await params;
+    console.log("Submit answer API called for session:", sessionId);
     
     // 1. Authenticate the user
     const { userId } = await auth();
@@ -36,11 +39,70 @@ export async function POST(request: Request, { params }: { params: { sessionId: 
 
     console.log("Received answer for question:", questionId);
 
-    // 4. Get the session from memory (in production, get from database)
-    const session = sessionStorage.get(params.sessionId);
+    // 4. Get the session from database first, then try memory as fallback
+    console.log("=== SUBMIT ANSWER DEBUG ===");
+    console.log("Looking for session:", sessionId);
+    console.log("User ID:", userId);
+    console.log("User DB ID:", user._id);
+    
+    let session;
+    
+    // First, try to get from database using sessionId
+    try {
+      console.log("Searching database for sessionId:", sessionId);
+      const dbSession = await MockSession.findOne({ sessionId: sessionId });
+      console.log("Database query result:", dbSession ? "FOUND" : "NOT FOUND");
+      
+      if (dbSession) {
+        console.log("Session found in database - Details:");
+        console.log("- DB ID:", dbSession._id);
+        console.log("- Session ID:", dbSession.sessionId);
+        console.log("- User ID:", dbSession.userId);
+        console.log("- Domain:", dbSession.domain);
+        console.log("- Questions count:", dbSession.questions?.length || 0);
+        console.log("- Answers count:", dbSession.answers?.length || 0);
+        
+        session = {
+          questions: dbSession.questions,
+          answers: dbSession.answers || [],
+          domain: dbSession.domain,
+          difficulty: dbSession.difficulty,
+          userId: dbSession.userId
+        };
+        
+        // Also store in memory for future requests
+        sessionStorage.set(sessionId, session);
+        console.log("Session cached in memory");
+      } else {
+        console.log("No session found in database with sessionId:", sessionId);
+        
+        // Let's also check if there are any sessions for this user
+        const userSessions = await MockSession.find({ userId: user._id }).sort({ createdAt: -1 }).limit(5);
+        console.log("Recent sessions for this user:", userSessions.map(s => ({
+          sessionId: s.sessionId,
+          createdAt: s.createdAt
+        })));
+      }
+    } catch (dbError) {
+      console.error("Database lookup failed:", dbError);
+    }
+    
+    // Fallback to memory storage
     if (!session) {
+      console.log("Trying memory storage as fallback");
+      session = sessionStorage.get(sessionId);
+      console.log("Memory storage result:", session ? "FOUND" : "NOT FOUND");
+    }
+    
+    if (!session) {
+      console.error("=== SESSION NOT FOUND ===");
+      console.error("SessionId searched:", sessionId);
+      console.error("User:", user.email);
+      console.error("No session found in database or memory");
       return new NextResponse("Session not found", { status: 404 });
     }
+    
+    console.log("Session found! Questions count:", session.questions?.length);
 
     // 5. Find the question
     const question = session.questions.find((q: any) => q.id === questionId);
@@ -102,7 +164,21 @@ export async function POST(request: Request, { params }: { params: { sessionId: 
     };
 
     session.answers.push(answerData);
-    sessionStorage.set(params.sessionId, session);
+    
+    // Save to both memory and database
+    sessionStorage.set(sessionId, session);
+    
+    // Update database as well
+    try {
+      await MockSession.findOneAndUpdate(
+        { sessionId: sessionId },
+        { $push: { answers: answerData } }
+      );
+      console.log("Answer saved to database");
+    } catch (dbError) {
+      console.error("Failed to save answer to database:", dbError);
+      // Continue anyway since we have it in memory
+    }
 
     console.log("Answer evaluated and stored");
 
