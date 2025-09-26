@@ -207,7 +207,7 @@ export default function ManageDomainsPage() {
   };
 
   return (
-    <div className="container py-8 space-y-6 px-10">
+    <div className="w-full py-8 space-y-6 px-4 sm:px-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Manage Domains</h1>

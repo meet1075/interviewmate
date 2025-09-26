@@ -142,7 +142,7 @@ export default function DashboardPage() {
     ]
 
     return (
-        <div className="container py-8 space-y-8 px-10">
+        <div className="w-full py-8 space-y-8 px-4 sm:px-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>

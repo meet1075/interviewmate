@@ -36,19 +36,19 @@ const testimonials = [
 
 export default function Home() {
   return (
-    <div className="container mt-[-12px] space-y-22">
+    <div className="w-full mt-[-12px] space-y-16 lg:space-y-20">
       {/* Hero + Stats Section (full screen) */}
-      <section className="min-h-screen flex flex-col justify-center items-center space-y-12">
+      <section className="container max-w-7xl mx-auto px-4 sm:px-6 min-h-screen flex flex-col justify-center items-center space-y-12">
         {/* Hero */}
-        <div className="text-center space-y-6">
+        <div className="text-center space-y-6 max-w-4xl">
           <h1 className="text-5xl md:text-6xl font-bold leading-tight">
             Master Your <span className="text-primary">Interviews</span>
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg md:text-xl">
+          <p className="text-muted-foreground mx-auto text-lg md:text-xl">
             Practice domain-specific interview questions, simulate mock interviews,
             track progress, and compete with peers.
           </p>
-          <div className="flex justify-center gap-6 mt-6">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mt-6">
             <Button size="lg" className="px-8 py-6 text-lg">
               Get Started
             </Button>
@@ -59,7 +59,7 @@ export default function Home() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full max-w-5xl pt-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 w-full max-w-6xl pt-10">
           {stats.map((stat, idx) => (
             <Card key={idx} className="text-center py-10 shadow-lg">
               <stat.icon className="h-10 w-10 mx-auto text-primary mb-4" />
@@ -71,7 +71,7 @@ export default function Home() {
       </section>
 
       {/* Features Section (scrolls into view) */}
-      <section className="space-y-10">
+      <section className="container max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
         <div className="text-center space-y-4">
           <h2 className="text-4xl font-bold">Explore Features</h2>
           <p className="text-muted-foreground text-lg">
@@ -79,7 +79,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           <Card className="interview-card group cursor-pointer transition-all duration-300 hover:shadow-hover">
             <CardHeader className="space-y-3">
               <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -168,14 +168,14 @@ export default function Home() {
       </section>
 
       {/* --- NEW: Testimonials Section --- */}
-      <section className="space-y-10">
+      <section className="container max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
         <div className="text-center space-y-4">
             <h2 className="text-4xl font-bold">Loved by Professionals</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                 Hear what our users have to say about their success after using our platform.
             </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {testimonials.map((testimonial, idx) => (
                 <Card key={idx} className="flex flex-col justify-between p-6">
                     <div>
@@ -200,8 +200,8 @@ export default function Home() {
       
       {/* --- NEW: Footer --- */}
       <footer className="border-t">
-        <div className="container flex flex-col items-center justify-between gap-6 py-10 md:h-24 md:flex-row md:py-0 px-10">
-            <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+        <div className="container max-w-7xl mx-auto flex flex-col items-center justify-between gap-6 py-10 md:h-24 md:flex-row md:py-0 px-4 sm:px-6">
+            <div className="flex flex-col items-center gap-4 md:flex-row md:gap-2">
                 <Trophy className="h-6 w-6 text-primary" />
                 <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
                     © {new Date().getFullYear()} InterviewMaster. All Rights Reserved.

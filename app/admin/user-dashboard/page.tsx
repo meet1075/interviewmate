@@ -156,7 +156,7 @@ export default function AdminViewUserDashboard() {
   const { user, stats, skillProgress, recentActivity, domainStats } = dashboardData;
 
   return (
-    <div className="container py-8 space-y-8 px-10">
+    <div className="w-full py-8 space-y-8 px-4 sm:px-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

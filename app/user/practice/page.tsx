@@ -66,7 +66,7 @@ export default function PracticePage() {
 
   if (!isLoaded) {
     return (
-        <div className="container py-8 text-center">
+        <div className="container py-8 text-center max-w-6xl mx-auto px-4 sm:px-6">
             <p>Loading...</p>
         </div>
     )
