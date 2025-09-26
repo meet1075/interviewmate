@@ -66,7 +66,7 @@ export default function PracticePage() {
 
   if (!isLoaded) {
     return (
-        <div className="container py-8 text-center max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="w-[70%] mx-auto py-8 text-center px-4 sm:px-6">
             <p>Loading...</p>
         </div>
     )
@@ -74,7 +74,7 @@ export default function PracticePage() {
 
   if (!isSignedIn) {
     return (
-      <div className="container py-8 max-w-2xl mx-auto text-center space-y-6">
+      <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
         <Card>
           <CardHeader>
             <CardTitle>Login Required</CardTitle>
@@ -134,7 +134,7 @@ export default function PracticePage() {
   // Session completed view
   if (currentSession && currentSession.currentQuestionIndex >= currentSession.totalQuestions) {
     return (
-      <div className="container py-8 max-w-4xl mx-auto space-y-6">
+      <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
         <Card className="border-green-500/20 bg-green-500/5 text-center">
           <CardHeader>
             <CardTitle className="flex items-center justify-center space-x-2 text-2xl">
@@ -164,7 +164,7 @@ export default function PracticePage() {
   // If no session, show domain/difficulty selection
   if (!currentSession) {
     return (
-      <div className="container py-8 max-w-4xl mx-auto space-y-6">
+      <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold">Practice Mode</h1>
           <p className="text-muted-foreground">Select domain and difficulty to start practicing</p>
@@ -259,7 +259,7 @@ export default function PracticePage() {
 
   // If session is active, show current question
   return (
-    <div className="container py-8 max-w-4xl mx-auto space-y-6">
+    <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Practice Mode</h1>
