@@ -8,8 +8,8 @@ export async function GET() {
         // 1. Connect to the database
         await connectDb();
 
-        // 2. Fetch all domains for practice selection
-        const domains = await Domain.find({}).sort({ name: 1 }).select('name');
+        // 2. Fetch only active domains for practice selection
+        const domains = await Domain.find({ status: 'active' }).sort({ name: 1 }).select('name');
 
         // 3. Return just the domain names
         const domainNames = domains.map(domain => domain.name);
