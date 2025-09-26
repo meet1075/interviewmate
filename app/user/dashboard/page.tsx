@@ -22,6 +22,9 @@ interface DashboardData {
     mockInterviews: number;
     totalPoints: number;
     bookmarkedQuestions: number;
+    leaderboardRank: number | null;
+    practiceSessionsCompleted: number;
+    mockInterviewsCompleted: number;
   };
   skillProgress: Array<{
     skill: string;
@@ -138,6 +141,7 @@ export default function DashboardPage() {
         { title: "Practice Questions", value: dashboardData.stats.practiceQuestions, icon: BookOpen, color: "text-blue-500" },
         { title: "Mock Interviews", value: dashboardData.stats.mockInterviews, icon: Trophy, color: "text-green-500" },
         { title: "Total Points", value: dashboardData.stats.totalPoints, icon: Star, color: "text-yellow-500" },
+        { title: "Leaderboard Rank", value: dashboardData.stats.leaderboardRank ? `#${dashboardData.stats.leaderboardRank}` : "Unranked", icon: Trophy, color: "text-purple-500" },
         { title: "Bookmarks Saved", value: dashboardData.stats.bookmarkedQuestions, icon: Bookmark, color: "text-orange-500" }
     ]
 

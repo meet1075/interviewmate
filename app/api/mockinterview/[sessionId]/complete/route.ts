@@ -168,7 +168,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
       console.log("Created new completed session record");
     }
 
-    // 7. Clean up session from memory
+    // 7. Award points to user based on performance and difficulty
+    const pointsMap = {
+      'Beginner': 20,
+      'Intermediate': 30,
+      'Advanced': 40
+    };
+    const basePoints = pointsMap[session.difficulty as keyof typeof pointsMap] || 20;
+    // Bonus points based on rating (0-10 scale -> 0-10 bonus points)
+    const bonusPoints = Math.round(averageRating);
+    const totalPoints = basePoints + bonusPoints;
+    
+    // Update user's total points and mock interviews completed
+    await User.findByIdAndUpdate(user._id, {
+      $inc: { 
+        totalPoints: totalPoints,
+        mockInterviewsCompleted: 1
+      }
+    });
+
+    // 8. Clean up session from memory
     sessionStorage.delete(sessionId);
 
     console.log("Session completed and saved to database");

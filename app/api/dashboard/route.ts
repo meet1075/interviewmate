@@ -58,10 +58,8 @@ export async function GET() {
     const completedMockSessions = mockSessions.filter(session => session.completedAt);
     const totalMockInterviews = completedMockSessions.length;
 
-    // 8. Calculate Total Points from Mock Interviews
-    const totalPoints = completedMockSessions.reduce((total, session) => {
-      return total + Math.round((session.overallRating || 0) * 10);
-    }, 0);
+    // 8. Get Total Points from User model (updated by practice and mock interview completions)
+    const totalPoints = user.totalPoints || 0;
 
     // 9. Get Bookmarked Questions Count
     // The field is 'bookmarkedQuestions' not 'bookmarks'
@@ -161,7 +159,24 @@ export async function GET() {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, 4);
 
-    // 12. Prepare response data
+    // 12. Calculate leaderboard position
+    let leaderboardRank = null;
+    if (totalPoints > 0) {
+      const higherRankedUsers = await User.countDocuments({
+        status: 'active',
+        totalPoints: { $gt: totalPoints }
+      });
+      
+      const samePointsEarlierUsers = await User.countDocuments({
+        status: 'active',
+        totalPoints: totalPoints,
+        createdAt: { $lt: user.createdAt }
+      });
+      
+      leaderboardRank = higherRankedUsers + samePointsEarlierUsers + 1;
+    }
+
+    // 13. Prepare response data
     const dashboardData = {
       user: {
         id: user._id.toString(),
@@ -173,7 +188,10 @@ export async function GET() {
         practiceQuestions: totalPracticeQuestions,
         mockInterviews: totalMockInterviews,
         totalPoints: totalPoints,
-        bookmarkedQuestions: bookmarkedCount
+        bookmarkedQuestions: bookmarkedCount,
+        leaderboardRank: leaderboardRank,
+        practiceSessionsCompleted: user.practiceSessionsCompleted || 0,
+        mockInterviewsCompleted: user.mockInterviewsCompleted || 0
       },
       skillProgress: skillProgress,
       recentActivity: sortedActivity,

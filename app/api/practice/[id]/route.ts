@@ -33,10 +33,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       updatedAt: new Date()
     };
 
-    // If all questions are completed, mark as completed
+    // If all questions are completed, mark as completed and award points
     const session = await PracticeSession.findById(id);
-    if (session && completedQuestions >= session.totalQuestions) {
+    if (session && completedQuestions >= session.totalQuestions && session.status !== 'completed') {
       updateData.status = 'completed';
+      
+      // Award points based on difficulty
+      const pointsMap = {
+        'Beginner': 10,
+        'Intermediate': 15,
+        'Advanced': 20
+      };
+      const points = pointsMap[session.difficulty as keyof typeof pointsMap] || 10;
+      
+      // Update user's total points and practice sessions completed
+      await User.findByIdAndUpdate(user._id, {
+        $inc: { 
+          totalPoints: points,
+          practiceSessionsCompleted: 1
+        }
+      });
     }
 
     // 5. Find and update the practice session

@@ -29,7 +29,19 @@ const userSchema = new Schema({
     bookmarkedQuestions: [{
             type: Schema.Types.ObjectId,
             ref: 'Question'
-  }]
+  }],
+    totalPoints: {
+           type: Number,
+           default: 0
+  },
+    practiceSessionsCompleted: {
+           type: Number,
+           default: 0
+  },
+    mockInterviewsCompleted: {
+           type: Number,
+           default: 0
+  }
 },{timestamps:true})
 
 const User = models?.User || model("User",userSchema)

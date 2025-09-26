@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   Sun,
-  Moon
+  Moon,
+  Trophy
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/components/theme-provider"
@@ -27,6 +28,7 @@ const userNavItems = [
   { title: "Practice", href: "/user/practice", icon: BookOpen },
   { title: "Mock Interview", href: "/user/mockinterview", icon: ClipboardList },
   { title: "Dashboard", href: "/user/dashboard", icon: BarChart3 },
+  { title: "Leaderboard", href: "/user/leaderboard", icon: Trophy },
   { title: "Bookmarks", href: "/user/bookmarks", icon: Bookmark },
 ]
 
@@ -34,6 +36,7 @@ const adminNavItems = [
   { title: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
   { title: "Users", href: "/admin/manageuser", icon: Users },
   { title: "Domains", href: "/admin/domains", icon: Database },
+  { title: "Leaderboard", href: "/admin/leaderboard", icon: Trophy },
   // { title: "Questions", href: "/admin/questions", icon: ClipboardList },
 ]
 
