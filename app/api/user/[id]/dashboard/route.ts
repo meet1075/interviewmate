@@ -59,9 +59,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     console.log("Found mock sessions:", mockSessions.length);
 
     // 6. Calculate Practice Questions Total
+    // For now, let's count total questions in sessions since completedQuestions might not be updated
     const totalPracticeQuestions = practiceSessions.reduce((total, session) => {
-      return total + (session.completedQuestions || 0);
+      // Use totalQuestions instead of completedQuestions as a temporary fix
+      return total + (session.totalQuestions || 0);
     }, 0);
+    
+    console.log("Practice sessions data:", practiceSessions.map(s => ({
+      id: s._id,
+      domain: s.domain,
+      totalQuestions: s.totalQuestions,
+      completedQuestions: s.completedQuestions,
+      questionsCount: s.questions?.length
+    })));
 
     // 7. Calculate Mock Interviews Total
     const completedMockSessions = mockSessions.filter(session => session.completedAt);
