@@ -24,12 +24,15 @@ export interface PracticeSession {
   startTime: string // Using ISO string for easier JSON serialization
   completedQuestions: number
   totalQuestions: number
+  status?: 'in-progress' | 'completed' | 'abandoned'
 }
 
 interface PracticeContextType {
   sessions: PracticeSession[]
   bookmarks: Question[]
   createSession: (domain: string, difficulty: string) => Promise<PracticeSession>
+  updateSessionProgress: (sessionId: string, completedQuestions: number, currentQuestionIndex: number) => Promise<void>
+  loadSessions: () => Promise<void>
   addBookmark: (question: Question) => Promise<void>
   removeBookmark: (questionId: string) => Promise<void>
   isBookmarked: (questionId: string) => boolean
@@ -47,11 +50,77 @@ export function PracticeProvider({ children }: { children: ReactNode }) {
   const [bookmarks, setBookmarks] = useState<Question[]>([])
 
   useEffect(() => {
-    // Load bookmarks from API on initial load
+    // Load bookmarks and sessions from API on initial load
     loadBookmarks();
+    loadSessions();
   }, [])
 
 
+
+  const loadSessions = async () => {
+    try {
+      const response = await fetch('/api/practice');
+      if (!response.ok) {
+        if (response.status === 404) {
+          setSessions([]);
+          return;
+        }
+        throw new Error('Failed to load practice sessions');
+      }
+      const data = await response.json();
+      
+      // Transform backend data to frontend interface
+      const transformedSessions = (data.sessions || []).map((sessionData: any) => ({
+        id: sessionData._id,
+        domain: sessionData.domain,
+        difficulty: sessionData.difficulty,
+        questions: sessionData.questions.map((q: any) => ({
+          id: q._id,
+          title: q.title,
+          description: q.description,
+          answer: q.answer,
+          hints: q.hints,
+          domain: q.domain,
+          difficulty: q.difficulty
+        })),
+        currentQuestionIndex: sessionData.currentQuestionIndex || 0,
+        startTime: sessionData.createdAt,
+        completedQuestions: sessionData.completedQuestions || 0,
+        totalQuestions: sessionData.totalQuestions || sessionData.questions.length,
+        status: sessionData.status || 'in-progress'
+      }));
+      
+      setSessions(transformedSessions);
+    } catch (error) {
+      console.error('Error loading practice sessions:', error);
+      setSessions([]);
+    }
+  };
+
+  const updateSessionProgress = async (sessionId: string, completedQuestions: number, currentQuestionIndex: number) => {
+    try {
+      const response = await fetch(`/api/practice/${sessionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ completedQuestions, currentQuestionIndex }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update session progress');
+      }
+
+      // Update local state
+      setSessions(prev => prev.map(session => 
+        session.id === sessionId 
+          ? { ...session, completedQuestions, currentQuestionIndex }
+          : session
+      ));
+    } catch (error) {
+      console.error('Error updating session progress:', error);
+    }
+  };
 
   const createSession = async (domain: string, difficulty: string): Promise<PracticeSession> => {
     try {
@@ -83,10 +152,11 @@ export function PracticeProvider({ children }: { children: ReactNode }) {
           domain: q.domain,
           difficulty: q.difficulty
         })),
-        currentQuestionIndex: 0,
+        currentQuestionIndex: sessionData.currentQuestionIndex || 0,
         startTime: sessionData.createdAt,
-        completedQuestions: sessionData.completedQuestions,
-        totalQuestions: sessionData.totalQuestions
+        completedQuestions: sessionData.completedQuestions || 0,
+        totalQuestions: sessionData.totalQuestions || sessionData.questions.length,
+        status: sessionData.status || 'in-progress'
       };
       
       setSessions(prev => [...prev, newSession]);
@@ -169,6 +239,8 @@ export function PracticeProvider({ children }: { children: ReactNode }) {
       sessions,
       bookmarks,
       createSession,
+      updateSessionProgress,
+      loadSessions,
       addBookmark,
       removeBookmark,
       isBookmarked,

@@ -108,3 +108,32 @@ export async function POST(request: Request) {
   }
 }
 
+export async function GET(request: Request) {
+  try {
+    // 1. Authenticate the user
+    const { userId } = await auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // 2. Connect to the database
+    await connectDb();
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) {
+      return new NextResponse("User not found in DB", { status: 404 });
+    }
+
+    // 3. Get all practice sessions for the user
+    const sessions = await PracticeSession.find({ user: user._id })
+      .populate('questions')
+      .sort({ createdAt: -1 }) // Most recent first
+      .limit(10); // Limit to last 10 sessions
+
+    return NextResponse.json({ sessions }, { status: 200 });
+
+  } catch (error) {
+    console.error("[GET_PRACTICE_SESSIONS_ERROR]", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}
+

@@ -11,6 +11,11 @@ const practiceSessionSchema = new Schema({
   totalQuestions: { type: Number, default: 10 },
   completedQuestions: { type: Number, default: 0 },
   currentQuestionIndex: { type: Number, default: 0 },
+  status: { 
+    type: String, 
+    enum: ['in-progress', 'completed', 'abandoned'],
+    default: 'in-progress'
+  },
   questions: [{
     type: Schema.Types.ObjectId,
     ref: 'Question'

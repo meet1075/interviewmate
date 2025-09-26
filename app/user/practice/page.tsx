@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Bookmark, BookmarkCheck, Clock, Target, Trophy } from "lucide-react"
+import { Bookmark, BookmarkCheck, CheckCircle, Clock, Target, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +14,7 @@ const difficulties = ["Beginner", "Intermediate", "Advanced"]
 
 export default function PracticePage() {
   const { isLoaded, isSignedIn } = useUser()
-  const { sessions, createSession, addBookmark, removeBookmark, isBookmarked, loadBookmarks } = usePractice()
+  const { sessions, createSession, updateSessionProgress, addBookmark, removeBookmark, isBookmarked, loadBookmarks } = usePractice()
   const [selectedDomain, setSelectedDomain] = useState("")
   const [selectedDifficulty, setSelectedDifficulty] = useState("")
   const [currentSession, setCurrentSession] = useState<PracticeSession | null>(null)
@@ -22,6 +22,7 @@ export default function PracticePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [domains, setDomains] = useState<string[]>([])
   const [domainsLoading, setDomainsLoading] = useState(true)
+  const completionMarkedRef = useRef<string | null>(null)
 
   // Fetch domains from API
   const fetchDomains = async () => {
@@ -99,6 +100,8 @@ export default function PracticePage() {
     try {
       const session = await createSession(selectedDomain, selectedDifficulty)
       setCurrentSession(session)
+      // Reset completion tracking for new session
+      completionMarkedRef.current = null
     } catch (error) {
       console.error("Failed to create session:", error)
     } finally {
@@ -106,15 +109,23 @@ export default function PracticePage() {
     }
   }
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (!currentSession) return
     
     const nextIndex = currentSession.currentQuestionIndex + 1
-      setCurrentSession({
-        ...currentSession,
-        currentQuestionIndex: nextIndex,
-        completedQuestions: nextIndex,
-      })
+    const completedQuestions = nextIndex
+    
+    // If this is the last question, mark as completed
+    const finalCompletedCount = nextIndex >= currentSession.totalQuestions ? currentSession.totalQuestions : completedQuestions
+    
+    // Update session progress in database
+    await updateSessionProgress(currentSession.id, finalCompletedCount, nextIndex)
+    
+    setCurrentSession({
+      ...currentSession,
+      currentQuestionIndex: nextIndex,
+      completedQuestions: finalCompletedCount,
+    })
   }
 
   const handleBookmarkToggle = async () => {
@@ -127,12 +138,28 @@ export default function PracticePage() {
     }
   }
 
-  const handleEndSession = () => {
+  const handleEndSession = async () => {
+    if (currentSession) {
+      // Update session progress when ending session
+      await updateSessionProgress(
+        currentSession.id, 
+        currentSession.currentQuestionIndex, 
+        currentSession.currentQuestionIndex
+      )
+    }
     setCurrentSession(null)
   }
 
+
+
   // Session completed view
   if (currentSession && currentSession.currentQuestionIndex >= currentSession.totalQuestions) {
+    // Mark session as completed only once per session
+    if (completionMarkedRef.current !== currentSession.id && currentSession.completedQuestions < currentSession.totalQuestions) {
+      completionMarkedRef.current = currentSession.id
+      updateSessionProgress(currentSession.id, currentSession.totalQuestions, currentSession.currentQuestionIndex)
+    }
+
     return (
       <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
         <Card className="border-green-500/20 bg-green-500/5 text-center">
@@ -175,15 +202,21 @@ export default function PracticePage() {
             <CardHeader><CardTitle className="flex items-center space-x-2"><Clock className="h-5 w-5" /><span>Recent Practice Sessions</span></CardTitle></CardHeader>
             <CardContent>
               <div className="grid gap-3">
-                {sessions.slice(-3).reverse().map((session) => (
+                {sessions.slice(0, 3).map((session) => (
                   <div key={session.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         <Badge variant="secondary">{session.domain}</Badge>
                         <Badge variant="outline">{session.difficulty}</Badge>
+                        {session.status === 'completed' && (
+                          <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Completed
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {session.completedQuestions} of {session.totalQuestions} questions completed
+                        {session.completedQuestions || 0} of {session.totalQuestions || 0} questions completed
                       </p>
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -206,7 +239,7 @@ export default function PracticePage() {
           <Card>
             <CardContent className="flex items-center space-x-3 p-4">
               <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center"><Trophy className="h-5 w-5 text-green-500" /></div>
-              <div><p className="text-2xl font-bold">{sessions.reduce((acc, s) => acc + s.completedQuestions, 0)}</p><p className="text-sm text-muted-foreground">Questions Practiced</p></div>
+              <div><p className="text-2xl font-bold">{sessions.reduce((acc, s) => acc + (s.completedQuestions || 0), 0)}</p><p className="text-sm text-muted-foreground">Questions Practiced</p></div>
             </CardContent>
           </Card>
           <Card>

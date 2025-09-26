@@ -26,24 +26,31 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     // 3. Get update data from request body
     const { completedQuestions, currentQuestionIndex } = await request.json();
 
-    // 4. Find and update the practice session
-    const session = await PracticeSession.findOneAndUpdate(
+    // 4. Determine if session is completed
+    const updateData: any = {
+      completedQuestions: completedQuestions,
+      currentQuestionIndex: currentQuestionIndex,
+      updatedAt: new Date()
+    };
+
+    // If all questions are completed, mark as completed
+    const session = await PracticeSession.findById(id);
+    if (session && completedQuestions >= session.totalQuestions) {
+      updateData.status = 'completed';
+    }
+
+    // 5. Find and update the practice session
+    const updatedSession = await PracticeSession.findOneAndUpdate(
       { _id: id, user: user._id },
-      {
-        $set: {
-          completedQuestions: completedQuestions,
-          currentQuestionIndex: currentQuestionIndex,
-          updatedAt: new Date()
-        }
-      },
+      { $set: updateData },
       { new: true }
     ).populate('questions');
 
-    if (!session) {
+    if (!updatedSession) {
       return new NextResponse("Practice session not found", { status: 404 });
     }
 
-    console.log("Practice session updated:", session._id);
+    console.log("Practice session updated:", updatedSession._id);
 
     return NextResponse.json({
       message: "Practice session updated successfully",
