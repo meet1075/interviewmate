@@ -5,6 +5,8 @@ import connectDb from "@/dbconfig/db";
 import User from "@/models/user.model";
 import { MockSession } from "@/models/practicesession.model";
 import sessionStorage from "@/utils/sessionStorage";
+import Domain from "@/models/domain.model";
+import Question from "@/models/question.model";
 
 // Initialize the AI client
 const client = new OpenAI({
@@ -194,6 +196,32 @@ export async function POST(request: Request) {
     sessionStorage.set(sessionId, memorySessionData);
     console.log("Session also stored in memory");
     console.log("Verification - can retrieve session:", sessionStorage.has(sessionId));
+
+    // Recalculate and persist the Domain.questionsCount to include both
+    // practice questions and unique mock interview questions for this domain.
+    try {
+      const practiceQuestionsCount = await Question.countDocuments({ domain: domain });
+
+      const uniqueMockQuestions = await MockSession.aggregate([
+        { $match: { domain: domain } },
+        { $unwind: '$questions' },
+        { $group: { _id: '$questions.id' } }
+      ]);
+
+      const mockQuestionsCount = uniqueMockQuestions.length;
+      const totalQuestionsCount = practiceQuestionsCount + mockQuestionsCount;
+
+      // Persist into Domain document (upsert to be safe)
+      await Domain.findOneAndUpdate(
+        { name: domain },
+        { $set: { questionsCount: totalQuestionsCount } },
+        { upsert: true }
+      );
+
+      console.log(`[DOMAIN_COUNT_UPDATED] domain=${domain} practice=${practiceQuestionsCount} mockUnique=${mockQuestionsCount} total=${totalQuestionsCount}`);
+    } catch (countErr) {
+      console.error('[DOMAIN_COUNT_UPDATE_ERROR]', countErr);
+    }
 
     // Update the session response with the final sessionId (in case it was changed due to duplicate)
     sessionResponse.id = sessionId;
