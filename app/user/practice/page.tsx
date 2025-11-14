@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Bookmark, BookmarkCheck, CheckCircle, Clock, Target, Trophy } from "lucide-react"
+import { Bookmark, BookmarkCheck, CheckCircle, Clock, Target, Trophy, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +23,7 @@ export default function PracticePage() {
   const [domains, setDomains] = useState<string[]>([])
   const [domainsLoading, setDomainsLoading] = useState(true)
   const completionMarkedRef = useRef<string | null>(null)
+  const [isSubmittingQuestion, setIsSubmittingQuestion] = useState(false)
 
   // Fetch domains from API
   const fetchDomains = async () => {
@@ -111,21 +112,29 @@ export default function PracticePage() {
 
   const handleNextQuestion = async () => {
     if (!currentSession) return
-    
+
+    setIsSubmittingQuestion(true)
     const nextIndex = currentSession.currentQuestionIndex + 1
     const completedQuestions = nextIndex
-    
+
     // If this is the last question, mark as completed
     const finalCompletedCount = nextIndex >= currentSession.totalQuestions ? currentSession.totalQuestions : completedQuestions
-    
-    // Update session progress in database
-    await updateSessionProgress(currentSession.id, finalCompletedCount, nextIndex)
-    
-    setCurrentSession({
-      ...currentSession,
-      currentQuestionIndex: nextIndex,
-      completedQuestions: finalCompletedCount,
-    })
+
+    try {
+      // Update session progress in database
+      await updateSessionProgress(currentSession.id, finalCompletedCount, nextIndex)
+
+      setCurrentSession({
+        ...currentSession,
+        currentQuestionIndex: nextIndex,
+        completedQuestions: finalCompletedCount,
+      })
+    } catch (error) {
+      console.error('Failed to update session progress:', error)
+    } finally {
+      // small delay to avoid flicker when UI updates immediately
+      setTimeout(() => setIsSubmittingQuestion(false), 150)
+    }
   }
 
   const handleBookmarkToggle = async () => {
@@ -366,11 +375,21 @@ export default function PracticePage() {
 
           {/* Navigation */}
           <div className="flex items-center justify-end">
-            <Button onClick={handleNextQuestion} className="hero-button">
-              {currentSession.currentQuestionIndex + 1 === currentSession.totalQuestions 
-                ? "Complete Session" 
-                : "Next Question"
-              }
+            <Button onClick={handleNextQuestion} disabled={isSubmittingQuestion} className="hero-button">
+              {isSubmittingQuestion ? (
+                <>
+                  <div className="w-4 h-4 mr-2 rounded-full border-2 border-t-white border-gray-200 animate-spin inline-block" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  {currentSession.currentQuestionIndex + 1 === currentSession.totalQuestions 
+                    ? "Complete Session" 
+                    : "Next Question"
+                  }
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </>
+              )}
             </Button>
           </div>
         </div>

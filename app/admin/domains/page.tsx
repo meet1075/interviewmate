@@ -99,8 +99,18 @@ export default function ManageDomainsPage() {
         throw new Error('Failed to update domain');
       }
 
-      const updatedDomain = await response.json();
-      setDomains(prev => prev.map(d => d._id === domainId ? updatedDomain : d));
+      const updatedDomainFromServer = await response.json();
+      // Preserve existing questionsCount and _id to avoid replacing with a new doc or zeroed counts
+      setDomains(prev => prev.map(d => {
+        if (d._id !== domainId) return d;
+        const merged = {
+          ...d, // existing values (preserve questionsCount)
+          ...updatedDomainFromServer, // apply server returned updates (name, status, etc.)
+          questionsCount: (d.questionsCount ?? 0) || (updatedDomainFromServer.questionsCount ?? 0),
+          _id: d._id // ensure we keep original id even if server returned a different one
+        } as DomainData;
+        return merged;
+      }));
       toast({ title: "Success", description: "Domain updated successfully" });
     } catch (error) {
       console.error('Error updating domain:', error);
@@ -140,8 +150,17 @@ export default function ManageDomainsPage() {
         throw new Error('Failed to update domain status');
       }
 
-      const updatedDomain = await response.json();
-      setDomains(prev => prev.map(d => d._id === domainId ? updatedDomain : d));
+      const updatedDomainFromServer = await response.json();
+      // Merge with existing to preserve questionsCount and original id
+      setDomains(prev => prev.map(d => {
+        if (d._id !== domainId) return d;
+        return {
+          ...d,
+          ...updatedDomainFromServer,
+          questionsCount: (d.questionsCount ?? 0) || (updatedDomainFromServer.questionsCount ?? 0),
+          _id: d._id
+        } as DomainData;
+      }));
       toast({ title: "Status Updated", description: `Domain is now ${newStatus}.` });
     } catch (error) {
       console.error('Error updating domain status:', error);
