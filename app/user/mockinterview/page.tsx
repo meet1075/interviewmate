@@ -38,6 +38,7 @@ export default function MockInterviewPage() {
   const [isPaused, setIsPaused] = useState(false)
   const [completedSession, setCompletedSession] = useState<MockSession | null>(null)
   const [showResults, setShowResults] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   // Fetch domains from database
   useEffect(() => {
@@ -170,7 +171,8 @@ export default function MockInterviewPage() {
 
   const startNewSession = async () => {
     if (!user) return
-    
+
+    setIsGenerating(true)
     try {
       const session = await createMockSession(selectedDomain, selectedDifficulty)
       setCurrentSession(session)
@@ -179,7 +181,7 @@ export default function MockInterviewPage() {
       setIsStarted(true)
       setShowResults(false)
       setCompletedSession(null)
-      
+
       toast({
         title: "Mock Interview Started",
         description: `${selectedDomain} - ${selectedDifficulty} level`
@@ -191,6 +193,8 @@ export default function MockInterviewPage() {
         description: "Failed to start mock interview. Please try again.",
         variant: "destructive"
       })
+    } finally {
+      setIsGenerating(false)
     }
   }
 
@@ -338,6 +342,7 @@ export default function MockInterviewPage() {
 
   // Setup view
   if (!currentSession) {
+    
     const userSessions = getUserSessions(user.id).filter(s => s.status === 'completed')
     
     return (
@@ -430,12 +435,21 @@ export default function MockInterviewPage() {
 
             <Button 
               onClick={startNewSession}
-              disabled={!selectedDomain || !selectedDifficulty || domainsLoading}
+              disabled={!selectedDomain || !selectedDifficulty || domainsLoading || isGenerating}
               size="lg"
               className="w-full hero-button"
             >
-              <Play className="h-5 w-5 mr-2" />
-              {domainsLoading ? "Loading..." : "Start Mock Interview"}
+              {isGenerating ? (
+                <>
+                  <div className="w-4 h-4 mr-2 rounded-full border-2 border-t-white border-gray-200 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Play className="h-5 w-5 mr-2" />
+                  {domainsLoading ? "Loading..." : "Start Mock Interview"}
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
