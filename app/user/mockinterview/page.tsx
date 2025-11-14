@@ -39,6 +39,7 @@ export default function MockInterviewPage() {
   const [completedSession, setCompletedSession] = useState<MockSession | null>(null)
   const [showResults, setShowResults] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false)
 
   // Fetch domains from database
   useEffect(() => {
@@ -113,15 +114,16 @@ export default function MockInterviewPage() {
 
   const handleNextQuestion = useCallback(async () => {
     if (!currentSession || !user) return
-    
+
+    setIsSubmittingAnswer(true)
     const currentQuestion = currentSession.questions[currentQuestionIndex]
     const timeSpent = (currentQuestion.timeLimit * 60) - timeRemaining
-    
+
     try {
       if (answer.trim()) {
         await submitAnswer(currentSession.id, currentQuestion.id, answer, timeSpent)
       }
-      
+
       if (currentQuestionIndex < currentSession.questions.length - 1) {
         setCurrentQuestionIndex(prev => prev + 1)
         setAnswer('')
@@ -135,6 +137,9 @@ export default function MockInterviewPage() {
         description: "Failed to submit answer. Please try again.",
         variant: "destructive"
       })
+    } finally {
+      // small delay to avoid flicker if next UI appears immediately
+      setTimeout(() => setIsSubmittingAnswer(false), 150)
     }
   }, [currentSession, user, answer, timeRemaining, currentQuestionIndex, submitAnswer, finishInterview, toast])
 
@@ -526,10 +531,19 @@ export default function MockInterviewPage() {
                 <div className="text-sm text-muted-foreground">
                   {answer.length} characters
                 </div>
-                <Button onClick={handleNextQuestion} disabled={isPaused} className="hero-button">
-                  {currentQuestionIndex === currentSession.questions.length - 1 ? 
-                    "Finish Interview" : "Next Question"}
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                <Button onClick={handleNextQuestion} disabled={isPaused || isSubmittingAnswer} className="hero-button">
+                  {isSubmittingAnswer ? (
+                    <>
+                      <div className="w-4 h-4 mr-2 rounded-full border-2 border-t-white border-gray-200 animate-spin inline-block" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {currentQuestionIndex === currentSession.questions.length - 1 ? 
+                        "Finish Interview" : "Next Question"}
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
