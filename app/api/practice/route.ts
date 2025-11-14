@@ -7,6 +7,7 @@ import connectDb from "@/dbconfig/db";
 import User from "@/models/user.model";
 import Question from "@/models/question.model";
 import PracticeSession from "@/models/practicesession.model";
+import Domain from "@/models/domain.model";
 
 // Initialize the AI client
 const client = new OpenAI({
@@ -83,6 +84,17 @@ export async function POST(request: Request) {
     );
     
     const questionIds = newQuestionDocs.map(doc => doc._id);
+    
+    // 5.a Update Domain.questionsCount to reflect newly inserted practice questions
+    try {
+      await Domain.findOneAndUpdate(
+        { name: domain },
+        { $inc: { questionsCount: questionIds.length } }
+      );
+    } catch (err) {
+      console.error("Failed to update Domain.questionsCount:", err);
+      // continue anyway
+    }
 
     // 6. Create and save the new practice session
     const newPracticeSession = new PracticeSession({
