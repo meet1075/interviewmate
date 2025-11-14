@@ -1,7 +1,7 @@
 import { BookOpen, Target, Trophy, Users, Bookmark, Twitter, Linkedin, Github, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import HeroCTA from "../components/hero-cta"
 
 // --- Data for Stats Section ---
 const stats = [
@@ -11,27 +11,7 @@ const stats = [
   { icon: Users, label: "Peers Connected", value: "54" },
 ]
 
-// --- Data for Testimonials Section (NEW) ---
-const testimonials = [
-    {
-        name: "Sarah L.",
-        avatar: "SL",
-        title: "Software Engineer @ Google",
-        quote: "This platform was a game-changer for my interview prep. The targeted questions and mock interviews gave me the confidence I needed to land my dream job."
-    },
-    {
-        name: "David C.",
-        avatar: "DC",
-        title: "Product Manager @ Microsoft",
-        quote: "I was able to connect with peers, get real-time feedback, and track my progress all in one place. Invaluable for anyone serious about their career."
-    },
-    {
-        name: "Emily R.",
-        avatar: "ER",
-        title: "UX Designer @ Airbnb",
-        quote: "The leaderboard feature brought a fun, competitive edge to studying. It pushed me to practice more consistently than any other tool I've used."
-    },
-]
+// (Testimonials removed per request)
 
 
 export default function Home() {
@@ -40,7 +20,7 @@ export default function Home() {
       {/* Hero + Stats Section (full screen) */}
       <section className="container max-w-7xl mx-auto px-4 sm:px-6 min-h-screen flex flex-col justify-center items-center space-y-12">
         {/* Hero */}
-        <div className="text-center space-y-6 max-w-4xl">
+          <div className="text-center space-y-6 max-w-4xl">
           <h1 className="text-5xl md:text-6xl font-bold leading-tight">
             Master Your <span className="text-primary">Interviews</span>
           </h1>
@@ -49,12 +29,7 @@ export default function Home() {
             track progress, and compete with peers.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mt-6">
-            <Button size="lg" className="px-8 py-6 text-lg">
-              Get Started
-            </Button>
-            <Button size="lg" variant="outline" className="px-8 py-6 text-lg">
-              Learn More
-            </Button>
+            <HeroCTA />
           </div>
         </div>
 
@@ -71,7 +46,7 @@ export default function Home() {
       </section>
 
       {/* Features Section (scrolls into view) */}
-      <section className="container max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+      <section id="features-section" className="container max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
         <div className="text-center space-y-4">
           <h2 className="text-4xl font-bold">Explore Features</h2>
           <p className="text-muted-foreground text-lg">
@@ -167,36 +142,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- NEW: Testimonials Section --- */}
-      <section className="container max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
-        <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold">Loved by Professionals</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Hear what our users have to say about their success after using our platform.
-            </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {testimonials.map((testimonial, idx) => (
-                <Card key={idx} className="flex flex-col justify-between p-6">
-                    <div>
-                        <div className="flex items-center gap-4 mb-4">
-                            <Avatar>
-                                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${testimonial.name}`} />
-                                <AvatarFallback>{testimonial.avatar}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">{testimonial.name}</p>
-                                <p className="text-sm text-muted-foreground">{testimonial.title}</p>
-                            </div>
-                        </div>
-                        <p className="text-muted-foreground leading-relaxed">
-                            "{testimonial.quote}"
-                        </p>
-                    </div>
-                </Card>
-            ))}
-        </div>
-      </section>
+    {/* Testimonials removed per user request */}
       
       {/* --- NEW: Footer --- */}
       <footer className="border-t">
