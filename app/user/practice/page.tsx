@@ -14,7 +14,7 @@ const difficulties = ["Beginner", "Intermediate", "Advanced"]
 
 export default function PracticePage() {
   const { isLoaded, isSignedIn } = useUser()
-  const { sessions, createSession, updateSessionProgress, addBookmark, removeBookmark, isBookmarked, loadBookmarks } = usePractice()
+  const { sessions, createSession, updateSessionProgress, addBookmark, removeBookmark, isBookmarked } = usePractice()
   const [selectedDomain, setSelectedDomain] = useState("")
   const [selectedDifficulty, setSelectedDifficulty] = useState("")
   const [currentSession, setCurrentSession] = useState<PracticeSession | null>(null)
@@ -179,7 +179,7 @@ export default function PracticePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-lg">Great job! You've completed all {currentSession.totalQuestions} questions.</p>
+            <p className="text-lg">Great job! You&apos;ve completed all {currentSession.totalQuestions} questions.</p>
             <div className="flex items-center justify-center space-x-2">
               <Button variant="outline" onClick={() => setCurrentSession(null)}>
                 Start New Session

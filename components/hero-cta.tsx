@@ -15,7 +15,7 @@ export default function HeroCTA() {
       } else {
         router.push("/sign-in");
       }
-    } catch (e) {
+    } catch {
       // fallback
       router.push("/sign-in");
     }

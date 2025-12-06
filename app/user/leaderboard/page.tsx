@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { useUser } from "@clerk/nextjs"
-import { Trophy, Medal, Award, User as UserIcon, Target, Star } from "lucide-react"
+import { Trophy, Medal, User as UserIcon, Target, Star } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -87,7 +88,7 @@ export default function LeaderboardPage() {
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="h-6 w-6 text-yellow-500" />
     if (rank === 2) return <Medal className="h-6 w-6 text-gray-400" />
-    if (rank === 3) return <Award className="h-6 w-6 text-amber-600" />
+    if (rank === 3) return <Medal className="h-6 w-6 text-amber-600" />
     return <span className="h-6 w-6 flex items-center justify-center text-sm font-bold">#{rank}</span>
   }
 
@@ -156,9 +157,11 @@ export default function LeaderboardPage() {
                     {getRankIcon(user.rank)}
                   </div>
                   <Avatar className="h-12 w-12">
-                    <img
+                    <Image
                       src={user.profileImage}
                       alt={`${user.firstName} ${user.lastName}`}
+                      width={48}
+                      height={48}
                       className="rounded-full"
                     />
                   </Avatar>
