@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     // 5. Save the new questions to the database
     const newQuestionDocs = await Question.insertMany(
-      generatedQuestions.map((q: any) => ({
+      generatedQuestions.map((q: { title: string; description: string; answer: string; hints?: string[]; domain?: string; difficulty?: string }) => ({
         title: q.title,
         description: q.description,
         answer: q.answer,
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // 1. Authenticate the user
     const { userId } = await auth();

@@ -27,7 +27,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const { completedQuestions, currentQuestionIndex } = await request.json();
 
     // 4. Determine if session is completed
-    const updateData: any = {
+    const updateData: {
+      completedQuestions: number;
+      currentQuestionIndex: number;
+      updatedAt: Date;
+      status?: string;
+    } = {
       completedQuestions: completedQuestions,
       currentQuestionIndex: currentQuestionIndex,
       updatedAt: new Date()
@@ -118,7 +123,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       id: session._id,
       domain: session.domain,
       difficulty: session.difficulty,
-      questions: session.questions.map((q: any) => ({
+      questions: session.questions.map((q: { _id: string; title: string; description: string; answer: string; domain: string; difficulty: string; hints?: string[] }) => ({
         id: q._id,
         title: q.title,
         description: q.description,

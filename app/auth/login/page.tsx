@@ -62,7 +62,7 @@ const MockSignIn = () => {
 
         <div className="text-center mt-6">
             <p className="text-sm text-muted-foreground">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <a href="/register" className="font-semibold text-primary hover:text-primary/80">
                     Sign up
                 </a>
