@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/contexts/AuthContext"
 import { usePractice } from "@/contexts/PracticeContext"
 import { useUser } from "@clerk/nextjs"
 
@@ -19,17 +18,31 @@ export default function BookmarksPage() {
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set())
   const [availableDomains, setAvailableDomains] = useState<string[]>([])
 
+  // Update available domains when bookmarks change
+  useEffect(() => {
+    const uniqueDomains = Array.from(new Set(bookmarks.map(q => q.domain)))
+    setAvailableDomains(["All", ...uniqueDomains])
+  }, [bookmarks])
+
+  useEffect(() => {
+    if (user) {
+      loadBookmarks()
+    }
+  }, [user, loadBookmarks])
+
   if (!user) {
     return (
-      <div className="container py-8 max-w-4xl mx-auto">
-        <Card className="text-center">
-          <CardContent className="p-8">
-            <h2 className="text-2xl font-bold mb-4">Login Required</h2>
-            <p className="text-muted-foreground mb-6">
+      <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Login Required</CardTitle>
+            <CardDescription>
               Please log in to view your bookmarked questions.
-            </p>
-            <Link href="/login">
-                <Button>Login</Button>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/sign-in">
+              <Button>Login to Continue</Button>
             </Link>
           </CardContent>
         </Card>
@@ -42,12 +55,6 @@ export default function BookmarksPage() {
     const matchesDomain = selectedDomain === "All" || question.domain === selectedDomain
     return matchesSearch && matchesDomain
   })
-
-  // Update available domains when bookmarks change
-  useEffect(() => {
-    const uniqueDomains = Array.from(new Set(bookmarks.map(q => q.domain)))
-    setAvailableDomains(["All", ...uniqueDomains])
-  }, [bookmarks])
 
   const domains = availableDomains
 
@@ -62,12 +69,6 @@ export default function BookmarksPage() {
       return newSet
     })
   }
-
-  useEffect(() => {
-    if (user) {
-      loadBookmarks()
-    }
-  }, [user])
 
   return (
     <div className="container py-8 max-w-4xl mx-auto space-y-6">

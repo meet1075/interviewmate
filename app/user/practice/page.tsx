@@ -31,7 +31,18 @@ export default function PracticePage() {
       setDomainsLoading(true)
       const response = await fetch('/api/domains/public')
       if (!response.ok) {
-        throw new Error('Failed to fetch domains')
+        console.warn('Failed to fetch domains from API, using fallback')
+        // Use fallback domains
+        setDomains([
+          "Frontend Development",
+          "Backend Development", 
+          "System Design",
+          "Data Science",
+          "Mobile Development",
+          "DevOps",
+          "Machine Learning"
+        ])
+        return
       }
       const data = await response.json()
       setDomains(data.domains || [])

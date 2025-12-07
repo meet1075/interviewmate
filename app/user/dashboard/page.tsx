@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { Calendar, Clock, Target, Trophy, TrendingUp, Award, BookOpen, Star, CheckCircle, Play, Bookmark } from "lucide-react"
+import { Trophy, TrendingUp, BookOpen, Star, Play, Bookmark } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -58,7 +58,10 @@ export default function DashboardPage() {
     // Fetch dashboard data from API
     useEffect(() => {
         const fetchDashboardData = async () => {
-            if (!user) return;
+            if (!user) {
+                setLoading(false)
+                return
+            }
 
             try {
                 setLoading(true)
@@ -76,7 +79,7 @@ export default function DashboardPage() {
             }
         }
 
-        if (isLoaded && user) {
+        if (isLoaded) {
             fetchDashboardData()
         }
     }, [user, isLoaded])
@@ -96,13 +99,17 @@ export default function DashboardPage() {
 
     if (!user) {
         return (
-            <div className="container py-8 max-w-4xl mx-auto">
-                <Card className="text-center">
-                    <CardContent className="p-8">
-                        <h2 className="text-2xl font-bold mb-4">Login Required</h2>
-                        <p className="text-muted-foreground mb-6">You need to be logged in to view your dashboard</p>
+            <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Login Required</CardTitle>
+                        <CardDescription>
+                            Please log in to view your dashboard and track your progress.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
                         <Link href="/sign-in">
-                            <Button>Login</Button>
+                            <Button>Login to Continue</Button>
                         </Link>
                     </CardContent>
                 </Card>
@@ -151,7 +158,7 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold">Welcome back, {dashboardData.user.username || user.firstName || 'User'}!</h1>
-                    <p className="text-muted-foreground">Here's a summary of your interview preparation progress.</p>
+                    <p className="text-muted-foreground">Here&apos;s a summary of your interview preparation progress.</p>
                 </div>
                 <Link href="/user/mockinterview">
                     <Button>

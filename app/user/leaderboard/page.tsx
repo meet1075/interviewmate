@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import Image from "next/image"
 import { useUser } from "@clerk/nextjs"
 import { Trophy, Medal, User as UserIcon, Target, Star } from "lucide-react"
@@ -80,6 +81,11 @@ export default function LeaderboardPage() {
               Please log in to view the leaderboard and see your ranking.
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <Link href="/sign-in">
+              <Button>Login to Continue</Button>
+            </Link>
+          </CardContent>
         </Card>
       </div>
     )

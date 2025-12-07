@@ -47,20 +47,18 @@ export default function MockInterviewPage() {
       try {
         setDomainsLoading(true)
         const response = await fetch('/api/domains/public')
-        if (response.ok) {
-          const data = await response.json()
-          if (data.domains && Array.isArray(data.domains)) {
-            setDomains(data.domains)
-          }
-        } else {
-          console.error('Failed to fetch domains')
-          // Fallback to default domains
-          setDomains(['Frontend Development', 'Backend Development', 'System Design'])
+        if (!response.ok) {
+          console.warn('Failed to fetch domains from API, using fallback')
+          // Use fallback domains
+          setDomains(['Frontend Development', 'Backend Development', 'System Design', 'Data Science', 'Mobile Development', 'DevOps', 'Machine Learning'])
+          return
         }
+        const data = await response.json()
+        setDomains(data.domains || [])
       } catch (error) {
         console.error('Error fetching domains:', error)
-        // Fallback to default domains
-        setDomains(['Frontend Development', 'Backend Development', 'System Design'])
+        // Fallback to default domains if API fails
+        setDomains(['Frontend Development', 'Backend Development', 'System Design', 'Data Science', 'Mobile Development', 'DevOps', 'Machine Learning'])
       } finally {
         setDomainsLoading(false)
       }
@@ -225,15 +223,17 @@ export default function MockInterviewPage() {
 
   if (!isSignedIn) {
       return (
-        <div className="w-[70%] mx-auto py-8 px-4 sm:px-6">
-            <Card className="text-center">
-                <CardContent className="p-8">
-                    <h2 className="text-2xl font-bold mb-4">Login Required</h2>
-                    <p className="text-muted-foreground mb-6">
-                        Please login to access mock interviews and track your progress.
-                    </p>
+        <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Login Required</CardTitle>
+                    <CardDescription>
+                        Please log in to access mock interviews and track your progress.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
                     <Link href="/sign-in">
-                        <Button className="hero-button">Login</Button>
+                        <Button>Login to Continue</Button>
                     </Link>
                 </CardContent>
             </Card>
