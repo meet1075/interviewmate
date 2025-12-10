@@ -223,23 +223,23 @@ export default function PracticePage() {
             <CardContent>
               <div className="grid gap-3">
                 {sessions.slice(0, 3).map((session) => (
-                  <div key={session.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="secondary">{session.domain}</Badge>
-                        <Badge variant="outline">{session.difficulty}</Badge>
+                  <div key={session.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-muted/30 rounded-lg">
+                    <div className="space-y-2 flex-1 min-w-0">
+                      <div className="flex items-center flex-wrap gap-2">
+                        <Badge variant="secondary" className="text-xs">{session.domain}</Badge>
+                        <Badge variant="outline" className="text-xs">{session.difficulty}</Badge>
                         {session.status === 'completed' && (
-                          <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                          <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-xs">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Completed
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {session.completedQuestions || 0} of {session.totalQuestions || 0} questions completed
                       </p>
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground whitespace-nowrap self-start sm:self-center">
                       {new Date(session.startTime).toLocaleDateString()}
                     </div>
                   </div>
