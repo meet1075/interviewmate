@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Trophy, TrendingUp, BookOpen, Star, Bookmark, ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -56,7 +56,7 @@ function AdminViewUserDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch dashboard data for the specified user
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (!userId) {
       setError("No user ID provided");
       setLoading(false);
@@ -94,7 +94,7 @@ function AdminViewUserDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, toast]);
 
   // Redirect if not an admin
   useEffect(() => {
@@ -106,7 +106,7 @@ function AdminViewUserDashboard() {
     if (isLoaded && authUser?.publicMetadata?.role === 'admin') {
       fetchDashboardData();
     }
-  }, [isLoaded, authUser, userId, router, fetchDashboardData]);
+  }, [isLoaded, authUser, router, fetchDashboardData]);
 
   if (!isLoaded || loading) {
     return (
