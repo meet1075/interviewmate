@@ -8,8 +8,7 @@ import sessionStorage from "@/utils/sessionStorage";
 
 // Initialize the AI client
 const client = new OpenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ sessionId: string }> }) {
@@ -131,7 +130,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
     console.log("Session found! Questions count:", session.questions?.length);
 
     // 5. Find the question
-    const question = session.questions.find((q: any) => q.id === questionId);
+    const question = session.questions.find((q: { id: string }) => q.id === questionId);
     if (!question) {
       return new NextResponse("Question not found", { status: 404 });
     }
@@ -141,8 +140,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
     
     try {
       // Check if AI API key is available
-      if (!process.env.GEMINI_API_KEY) {
-        console.log("GEMINI_API_KEY not found, using default evaluation");
+      if (!process.env.OPENAI_API_KEY) {
+        console.log("OPENAI_API_KEY not found, using default evaluation");
         evaluation = {
           rating: Math.floor(Math.random() * 4) + 6, // Random rating between 6-9
           feedback: "Answer submitted. AI evaluation temporarily unavailable."
@@ -177,7 +176,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
 
         console.log("Making AI API call...");
         const response = await client.chat.completions.create({
-          model: "gemini-2.0-flash",
+          model: "gpt-4o-mini",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },

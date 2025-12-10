@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { useUser } from "@clerk/nextjs"
 import { Trophy, Medal, User as UserIcon, Target, Star, Download, Filter } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -254,9 +255,11 @@ export default function AdminLeaderboardPage() {
                     {getRankIcon(user.rank)}
                   </div>
                   <Avatar className="h-12 w-12">
-                    <img
+                    <Image
                       src={user.profileImage}
                       alt={`${user.firstName} ${user.lastName}`}
+                      width={48}
+                      height={48}
                       className="rounded-full"
                     />
                   </Avatar>

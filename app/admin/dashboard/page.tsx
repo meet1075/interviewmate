@@ -4,20 +4,13 @@ import {
   Users, 
   BookOpen, 
   TrendingUp, 
-  Clock, 
-  CheckCircle,
-  AlertTriangle,
-  BarChart3,
   Activity,
   Star,
-  MessageSquare,
   Brain,
   UserCheck
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -108,7 +101,7 @@ export default function AdminDashboard() {
     if (isLoaded && user?.publicMetadata?.role === 'admin') {
       fetchDashboardData();
     }
-  }, [isLoaded, user, router]);
+  }, [isLoaded, user, router, fetchDashboardData]);
 
   if (!isLoaded || loading) {
     return <div className="container py-8 text-center"><p>Loading...</p></div>;
@@ -252,7 +245,7 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Today's Summary</CardTitle>
+              <CardTitle>Today&apos;s Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">

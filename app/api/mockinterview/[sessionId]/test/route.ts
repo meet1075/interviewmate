@@ -26,7 +26,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ sess
     const dbSession = await MockSession.findOne({ sessionId: sessionId });
     
     // 4. Check environment variables
-    const hasGeminiKey = !!process.env.GEMINI_API_KEY;
     const hasMongoUrl = !!process.env.MONGODB_URL;
 
     return NextResponse.json({
@@ -43,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ sess
         answersCount: dbSession.answers?.length || 0
       } : null,
       environment: {
-        hasGeminiKey,
+        hasOpenAIKey: !!process.env.OPENAI_API_KEY,
         hasMongoUrl,
         nodeEnv: process.env.NODE_ENV
       },

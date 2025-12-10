@@ -10,8 +10,7 @@ import Question from "@/models/question.model";
 
 // Initialize the AI client
 const client = new OpenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(request: Request) {
@@ -75,15 +74,46 @@ export async function POST(request: Request) {
 
     const userPrompt = `Generate interview questions for the domain: ${domain}, difficulty level: ${difficulty}.`;
 
-    const response = await client.chat.completions.create({
-        model: "gemini-2.0-flash", 
-        messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.8,
-    });
+    let response;
+    try {
+      response = await client.chat.completions.create({
+          model: "gpt-4o-mini", 
+          messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.8,
+      });
+    } catch (aiError: unknown) {
+      console.error("AI API Error:", aiError);
+      
+      // Check if it's a rate limit error (429)
+      if (aiError && typeof aiError === 'object' && 'status' in aiError && aiError.status === 429) {
+        return new NextResponse(
+          JSON.stringify({ 
+            error: "Rate limit exceeded. Please wait a moment and try again.",
+            code: "RATE_LIMIT"
+          }), 
+          { 
+            status: 429,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      
+      // Other AI errors
+      return new NextResponse(
+        JSON.stringify({ 
+          error: "Failed to generate questions. Please try again.",
+          code: "AI_ERROR"
+        }), 
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     console.log("AI response received");
     const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
@@ -91,7 +121,16 @@ export async function POST(request: Request) {
 
     if (!generatedQuestions || generatedQuestions.length === 0) {
       console.log("No questions generated");
-      return new NextResponse("AI failed to generate questions", { status: 500 });
+      return new NextResponse(
+        JSON.stringify({ 
+          error: "AI failed to generate questions",
+          code: "NO_QUESTIONS"
+        }), 
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     console.log("Generated questions:", generatedQuestions.length);
@@ -105,7 +144,7 @@ export async function POST(request: Request) {
       userId: user._id.toString(),
       domain: domain,
       difficulty: difficulty,
-      questions: generatedQuestions.map((q: any) => ({
+      questions: generatedQuestions.map((q: { id: number; title: string; description: string; referenceAnswer: string; timeLimit?: number }) => ({
         id: `q_${q.id}_${Date.now()}`,
         title: q.title,
         description: q.description,

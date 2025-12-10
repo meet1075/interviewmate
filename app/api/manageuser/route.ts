@@ -4,6 +4,23 @@ import connectDb from "@/dbconfig/db";
 import User from "@/models/user.model";
 import { MockSession } from "@/models/practicesession.model";
 
+interface UserDocument {
+    _id: { toString: () => string };
+    clerkId: string;
+    email: string;
+    userName: string;
+    firstName: string;
+    lastName: string;
+    profileImage: string;
+    role: string;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    points: number;
+    status: string;
+    bookmarkedQuestions?: unknown[];
+}
+
 // --- GET ALL USERS WITH SEARCH AND FILTER OPTIONS ---
 export async function GET(request: Request) {
     try {
@@ -25,7 +42,7 @@ export async function GET(request: Request) {
         await connectDb();
 
         // 4. Build the filter query
-        let filterQuery: any = {};
+        const filterQuery: { $or?: Array<Record<string, unknown>>; role?: string; status?: string } = {};
 
         // Search filter (name, email, userName)
         if (search.trim()) {
@@ -51,11 +68,11 @@ export async function GET(request: Request) {
         const skip = (page - 1) * limit;
 
         // 6. Fetch users with filters, pagination, and sorting
-        const users = await User.find(filterQuery)
+        const users = (await User.find(filterQuery)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .lean(); // Use lean() for better performance
+            .lean()) as unknown as UserDocument[]; // Use lean() for better performance
 
         // 7. Get total count for pagination
         const totalUsers = await User.countDocuments(filterQuery);
@@ -100,7 +117,7 @@ export async function GET(request: Request) {
 
         // 10. Format response with user data and metadata
         const response = {
-            users: users.map((user: any) => {
+            users: users.map((user: UserDocument) => {
                 const userStats = statsMap.get(user._id.toString()) || {
                     sessionsCompleted: 0,
                     totalRating: 0,

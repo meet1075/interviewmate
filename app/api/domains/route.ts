@@ -3,10 +3,10 @@ import { auth } from "@clerk/nextjs/server";
 import connectDb from "@/dbconfig/db";
 import Domain from "@/models/domain.model";
 import Question from "@/models/question.model";
-import PracticeSession, { MockSession } from "@/models/practicesession.model";
+import { MockSession } from "@/models/practicesession.model";
 
 // --- GET ALL DOMAINS ---
-export async function GET(request: Request) {
+export async function GET() {
     try {
         // 1. Authenticate and authorize the user as an admin
         const { sessionClaims } = await auth();
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error("[DOMAINS_POST_ERROR]", error);
         // Handle the case where a domain with the same name already exists
-        if ((error as any).code === 11000) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
             return new NextResponse("A domain with this name already exists.", { status: 409 });
         }
         return new NextResponse("Internal Server Error", { status: 500 });

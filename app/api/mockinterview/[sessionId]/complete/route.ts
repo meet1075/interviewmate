@@ -8,8 +8,7 @@ import sessionStorage from "@/utils/sessionStorage";
 
 // Initialize the AI client
 const client = new OpenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ sessionId: string }> }) {
@@ -70,9 +69,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
     // 4. Calculate overall statistics
     const totalQuestions = session.questions.length;
     const answeredQuestions = session.answers.length;
-    const ratings = session.answers.map((a: any) => a.rating);
+    const ratings = session.answers.map((a: { rating: number }) => a.rating);
     const averageRating = ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length;
-    const totalTimeSpent = session.answers.reduce((sum: number, answer: any) => sum + answer.timeSpent, 0);
+    const totalTimeSpent = session.answers.reduce((sum: number, answer: { timeSpent: number }) => sum + answer.timeSpent, 0);
 
     // 5. Use AI to generate overall feedback
     const systemPrompt = `
@@ -107,7 +106,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
       answeredQuestions: answeredQuestions,
       averageRating: averageRating,
       totalTime: totalTimeSpent,
-      individualAnswers: session.answers.map((answer: any) => ({
+      individualAnswers: session.answers.map((answer: { rating: number; timeSpent: number; feedback: string }) => ({
         rating: answer.rating,
         timeSpent: answer.timeSpent,
         feedback: answer.feedback
@@ -117,7 +116,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
     const userPrompt = JSON.stringify(performanceData);
 
     const response = await client.chat.completions.create({
-      model: "gemini-2.0-flash",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

@@ -3,7 +3,6 @@ import { auth } from "@clerk/nextjs/server";
 import connectDb from "@/dbconfig/db";
 import User from "@/models/user.model";
 import { MockSession } from "@/models/practicesession.model";
-import sessionStorage from "@/utils/sessionStorage";
 
 export async function GET() {
   try {

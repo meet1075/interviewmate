@@ -6,7 +6,7 @@ export async function GET() {
       status: "API is working",
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
-      hasGeminiKey: !!process.env.GEMINI_API_KEY,
+      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
       hasMongoUrl: !!process.env.MONGODB_URL
     });
   } catch (error) {

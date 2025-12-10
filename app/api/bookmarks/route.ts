@@ -22,7 +22,7 @@ export async function GET() {
     }
 
     // 3. Transform the bookmarked questions to match frontend interface
-    const bookmarks = user.bookmarkedQuestions.map((question: any) => ({
+    const bookmarks = user.bookmarkedQuestions.map((question: { _id: { toString: () => string }; title: string; description: string; answer: string; hints?: string[]; domain: string; difficulty: string }) => ({
       id: question._id.toString(),
       title: question.title,
       description: question.description,
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
     // 2. Connect to the database
     await connectDb();
-    let user = await User.findOne({ clerkId: userId });
+    const user = await User.findOne({ clerkId: userId });
     
     // If user doesn't exist yet (race condition with webhook), return error to retry
     if (!user) {
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     
     // 5. Add question to bookmarks if not already bookmarked
     const isAlreadyBookmarked = user.bookmarkedQuestions.some(
-      (questionId: any) => questionId.toString() === id
+      (questionId: { toString: () => string }) => questionId.toString() === id
     );
 
     if (!isAlreadyBookmarked) {
@@ -104,7 +104,7 @@ export async function DELETE(request: Request) {
     
     // 4. Remove question from bookmarks
     user.bookmarkedQuestions = user.bookmarkedQuestions.filter(
-      (id: any) => id.toString() !== questionId
+      (id: { toString: () => string }) => id.toString() !== questionId
     );
     await user.save();
 

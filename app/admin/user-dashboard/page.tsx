@@ -1,9 +1,8 @@
 "use client"
 
-import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Calendar, Clock, Target, Trophy, TrendingUp, Award, BookOpen, Star, CheckCircle, Play, Bookmark, ArrowLeft } from "lucide-react"
+import { Trophy, TrendingUp, BookOpen, Star, Bookmark, ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -45,7 +44,7 @@ interface DashboardData {
   }>;
 }
 
-export default function AdminViewUserDashboard() {
+function AdminViewUserDashboard() {
   const { user: authUser, isLoaded } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -107,7 +106,7 @@ export default function AdminViewUserDashboard() {
     if (isLoaded && authUser?.publicMetadata?.role === 'admin') {
       fetchDashboardData();
     }
-  }, [isLoaded, authUser, userId]);
+  }, [isLoaded, authUser, userId, router, fetchDashboardData]);
 
   if (!isLoaded || loading) {
     return (
@@ -153,7 +152,7 @@ export default function AdminViewUserDashboard() {
     );
   }
 
-  const { user, stats, skillProgress, recentActivity, domainStats } = dashboardData;
+  const { user, stats, skillProgress, recentActivity } = dashboardData;
 
   return (
     <div className="w-full py-8 space-y-8 px-4 sm:px-6">
@@ -300,5 +299,14 @@ export default function AdminViewUserDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Wrap the component with Suspense boundary
+export default function AdminViewUserDashboardPage() {
+  return (
+    <Suspense fallback={<div className="container py-8 text-center">Loading...</div>}>
+      <AdminViewUserDashboard />
+    </Suspense>
   );
 }

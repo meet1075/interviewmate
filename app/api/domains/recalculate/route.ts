@@ -6,7 +6,7 @@ import Question from "@/models/question.model";
 import { MockSession } from "@/models/practicesession.model";
 
 // Recalculate questionsCount for all domains and persist to Domain collection
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const { sessionClaims } = await auth();
     if (sessionClaims?.metadata?.role !== 'admin') {

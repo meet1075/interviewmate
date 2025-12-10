@@ -189,11 +189,21 @@ export default function MockInterviewPage() {
         title: "Mock Interview Started",
         description: `${selectedDomain} - ${selectedDifficulty} level`
       })
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error starting mock interview:', error)
+      
+      // Check if it's a rate limit error
+      let errorMessage = "Failed to start mock interview. Please try again.";
+      if (error && typeof error === 'object' && 'message' in error) {
+        const errMsg = String(error.message);
+        if (errMsg.includes('429') || errMsg.includes('rate limit') || errMsg.includes('RATE_LIMIT')) {
+          errorMessage = "Rate limit exceeded. Please wait a few moments and try again.";
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to start mock interview. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {

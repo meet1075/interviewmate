@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error("[USER_POST_ERROR]", error);
         // Handle the case where a user with the same clerkId, email, or userName already exists
-        if ((error as any).code === 11000) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
             return new NextResponse("A user with this information already exists.", { status: 409 });
         }
         return new NextResponse("Internal Server Error", { status: 500 });

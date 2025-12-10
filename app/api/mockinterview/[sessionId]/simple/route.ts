@@ -77,7 +77,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
     }
     
     // Step 8: Find question
-    const question = session.questions.find((q: any) => q.id === questionId);
+    const question = session.questions.find((q: { id: string }) => q.id === questionId);
     if (!question) {
       console.log("✗ Question not found:", questionId);
       return new NextResponse("Question not found", { status: 404 });
