@@ -20,11 +20,11 @@ export default function Home() {
       {/* Hero + Stats Section (full screen) */}
       <section className="container max-w-7xl mx-auto px-4 sm:px-6 min-h-screen flex flex-col justify-center items-center space-y-16">
         {/* Hero */}
-        <div className="text-center space-y-6 max-w-4xl w-full">
-          <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+        <div className="text-center space-y-4 sm:space-y-6 max-w-4xl w-full px-2">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
             Master Your <span className="text-primary">Interviews</span>
           </h1>
-          <p className="text-muted-foreground mx-auto text-lg md:text-xl max-w-3xl">
+          <p className="text-muted-foreground mx-auto text-base sm:text-lg md:text-xl max-w-3xl">
             Practice domain-specific interview questions, simulate mock interviews,
             track progress, and compete with peers.
           </p>
@@ -34,13 +34,13 @@ export default function Home() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 w-full max-w-6xl">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 w-full max-w-6xl">
           {stats.map((stat, idx) => (
-            <Card key={idx} className="text-center p-6 shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-0 space-y-3">
-                <stat.icon className="h-12 w-12 mx-auto text-primary" />
-                <CardTitle className="text-3xl font-bold">{stat.value}</CardTitle>
-                <CardDescription className="text-sm">{stat.label}</CardDescription>
+            <Card key={idx} className="text-center p-3 sm:p-6 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-0 space-y-2 sm:space-y-3">
+                <stat.icon className="h-8 w-8 sm:h-12 sm:w-12 mx-auto text-primary" />
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold">{stat.value}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">{stat.label}</CardDescription>
               </CardContent>
             </Card>
           ))}

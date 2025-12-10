@@ -214,10 +214,10 @@ export default function ManageUsersPage() {
 
   return (
     <div className="w-full py-8 space-y-6 px-4 sm:px-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Manage Users</h1>
-          <p className="text-muted-foreground">View, search, and manage all platform users.</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Manage Users</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">View and manage all registered users</p>
         </div>
       </div>
 
@@ -263,8 +263,8 @@ export default function ManageUsersPage() {
               <p>Loading users...</p>
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
+            <div className="rounded-md border overflow-x-auto">
+              <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[250px]">User</TableHead>

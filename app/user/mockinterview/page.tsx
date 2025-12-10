@@ -225,7 +225,7 @@ export default function MockInterviewPage() {
 
   if (!isLoaded) {
     return (
-        <div className="w-[70%] mx-auto py-8 text-center px-4 sm:px-6">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center px-4 sm:px-6 lg:px-8">
             <p>Loading...</p>
         </div>
     )
@@ -233,7 +233,7 @@ export default function MockInterviewPage() {
 
   if (!isSignedIn) {
       return (
-        <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6 lg:px-8">
             <Card>
                 <CardHeader>
                     <CardTitle>Login Required</CardTitle>
@@ -254,7 +254,7 @@ export default function MockInterviewPage() {
   // Results view
   if (showResults && completedSession) {
     return (
-      <div className="w-[70%] mx-auto py-8 space-y-8 px-4 sm:px-6">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-4">
           <div className="flex justify-center">
             <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center">
@@ -342,12 +342,12 @@ export default function MockInterviewPage() {
         </Card>
 
         <div className="text-center space-y-4">
-          <div className="flex justify-center space-x-4">
-            <Button onClick={resetInterview} className="hero-button">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+            <Button onClick={resetInterview} className="hero-button w-full sm:w-auto">
               Start New Interview
             </Button>
-            <Link href="/user/dashboard">
-              <Button variant="outline">View Dashboard</Button>
+            <Link href="/user/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto">View Dashboard</Button>
             </Link>
           </div>
         </div>
@@ -361,10 +361,10 @@ export default function MockInterviewPage() {
     const userSessions = getUserSessions(user.id).filter(s => s.status === 'completed')
     
     return (
-      <div className="w-[70%] mx-auto py-8 space-y-8 px-4 sm:px-6">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">Mock Interview</h1>
-          <p className="text-xl text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Mock Interview</h1>
+          <p className="text-sm sm:text-base lg:text-xl text-muted-foreground">
             Practice with AI-powered mock interviews and get real-time feedback
           </p>
         </div>
@@ -475,9 +475,9 @@ export default function MockInterviewPage() {
   // Interview in progress view
   const currentQuestion = currentSession.questions[currentQuestionIndex]
   return (
-    <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-4 sm:space-y-6 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <h1 className="text-2xl font-bold">Mock Interview</h1>
           <Badge variant="outline">
             Question {currentQuestionIndex + 1} of {currentSession.questions.length}

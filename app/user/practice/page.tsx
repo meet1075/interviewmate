@@ -79,7 +79,7 @@ export default function PracticePage() {
 
   if (!isLoaded) {
     return (
-        <div className="w-[70%] mx-auto py-8 text-center px-4 sm:px-6">
+        <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center px-4 sm:px-6 lg:px-8">
             <p>Loading...</p>
         </div>
     )
@@ -87,7 +87,7 @@ export default function PracticePage() {
 
   if (!isSignedIn) {
     return (
-      <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6 lg:px-8">
         <Card>
           <CardHeader>
             <CardTitle>Login Required</CardTitle>
@@ -191,12 +191,12 @@ export default function PracticePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-lg">Great job! You&apos;ve completed all {currentSession.totalQuestions} questions.</p>
-            <div className="flex items-center justify-center space-x-2">
-              <Button variant="outline" onClick={() => setCurrentSession(null)}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-2">
+              <Button variant="outline" onClick={() => setCurrentSession(null)} className="w-full sm:w-auto">
                 Start New Session
               </Button>
-              <Link href="/user/bookmarks">
-                <Button variant="outline">
+              <Link href="/user/bookmarks" className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto">
                   <Bookmark className="h-4 w-4 mr-2" />
                   View Bookmarks
                 </Button>
@@ -211,10 +211,10 @@ export default function PracticePage() {
   // If no session, show domain/difficulty selection
   if (!currentSession) {
     return (
-      <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold">Practice Mode</h1>
-          <p className="text-muted-foreground">Select domain and difficulty to start practicing</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Practice Mode</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Select domain and difficulty to start practicing</p>
         </div>
         
         {sessions.length > 0 && (
@@ -312,14 +312,14 @@ export default function PracticePage() {
 
   // If session is active, show current question
   return (
-    <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
-      <div className="flex items-center justify-between">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Practice Mode</h1>
-          <p className="text-muted-foreground">{currentSession.domain} • {currentSession.difficulty}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Practice Mode</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{currentSession.domain} • {currentSession.difficulty}</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="px-4 py-2">
+        <div className="flex items-center flex-wrap gap-2">
+          <Badge variant="outline" className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm">
             Question {currentSession.currentQuestionIndex + 1} of {currentSession.totalQuestions}
           </Badge>
           <Button variant="outline" size="sm" onClick={handleEndSession}>End Session</Button>
@@ -331,16 +331,16 @@ export default function PracticePage() {
           {/* Question Card */}
           <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="space-y-3 flex-1">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary">{currentQuestion.domain}</Badge>
-                    <Badge variant={currentQuestion.difficulty === "Advanced" ? "destructive" : "default"}>{currentQuestion.difficulty}</Badge>
+                  <div className="flex items-center flex-wrap gap-2">
+                    <Badge variant="secondary" className="text-xs">{currentQuestion.domain}</Badge>
+                    <Badge variant={currentQuestion.difficulty === "Advanced" ? "destructive" : "default"} className="text-xs">{currentQuestion.difficulty}</Badge>
                   </div>
-                  <CardTitle className="text-xl leading-relaxed">{currentQuestion.title}</CardTitle>
-                  <CardDescription className="text-base">{currentQuestion.description}</CardDescription>
+                  <CardTitle className="text-lg sm:text-xl leading-relaxed">{currentQuestion.title}</CardTitle>
+                  <CardDescription className="text-sm sm:text-base">{currentQuestion.description}</CardDescription>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 self-start">
                   <Button variant="ghost" size="sm" onClick={handleBookmarkToggle}>
                     {isBookmarked(currentQuestion.id) ? (
                       <BookmarkCheck className="h-4 w-4 text-orange-500" />
@@ -386,7 +386,7 @@ export default function PracticePage() {
 
           {/* Navigation */}
           <div className="flex items-center justify-end">
-            <Button onClick={handleNextQuestion} disabled={isSubmittingQuestion} className="hero-button">
+            <Button onClick={handleNextQuestion} disabled={isSubmittingQuestion} className="hero-button w-full sm:w-auto">
               {isSubmittingQuestion ? (
                 <>
                   <div className="w-4 h-4 mr-2 rounded-full border-2 border-t-white border-gray-200 animate-spin inline-block" />

@@ -99,7 +99,7 @@ export default function DashboardPage() {
 
     if (!user) {
         return (
-            <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
+            <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6 lg:px-8">
                 <Card>
                     <CardHeader>
                         <CardTitle>Login Required</CardTitle>
@@ -156,12 +156,12 @@ export default function DashboardPage() {
         <div className="w-full py-8 space-y-8 px-4 sm:px-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold">Welcome back, {dashboardData.user.username || user.firstName || 'User'}!</h1>
-                    <p className="text-muted-foreground">Here&apos;s a summary of your interview preparation progress.</p>
+                <div className="flex-1">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold break-words">Welcome back, {dashboardData.user.username || user.firstName || 'User'}!</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">Here&apos;s a summary of your interview preparation progress.</p>
                 </div>
-                <Link href="/user/mockinterview">
-                    <Button>
+                <Link href="/user/mockinterview" className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto">
                         <Play className="h-4 w-4 mr-2" />
                         Start Mock Interview
                     </Button>

@@ -157,22 +157,20 @@ function AdminViewUserDashboard() {
   return (
     <div className="w-full py-8 space-y-8 px-4 sm:px-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
-            onClick={() => router.push('/admin/manageuser')}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Manage Users</span>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">User Dashboard</h1>
-            <p className="text-muted-foreground">
-              Viewing dashboard for: <span className="font-medium">{user.email}</span>
-            </p>
-          </div>
+      <div className="flex flex-col gap-4">
+        <Button 
+          variant="outline" 
+          onClick={() => router.push('/admin/manageuser')}
+          className="flex items-center space-x-2 self-start"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Manage Users</span>
+        </Button>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">User Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+            Viewing dashboard for: <span className="font-medium break-all">{user.email}</span>
+          </p>
         </div>
       </div>
 

@@ -227,10 +227,10 @@ export default function ManageDomainsPage() {
 
   return (
     <div className="w-full py-8 space-y-6 px-4 sm:px-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Manage Domains</h1>
-          <p className="text-muted-foreground">Organize interview questions by subject areas for mock interviews and practice sessions</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Manage Domains</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">Organize interview questions by subject areas for mock interviews and practice sessions</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
@@ -263,8 +263,8 @@ export default function ManageDomainsPage() {
               <p>Loading domains...</p>
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
+            <div className="rounded-md border overflow-x-auto">
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Domain</TableHead>

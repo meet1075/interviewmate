@@ -32,7 +32,7 @@ export default function BookmarksPage() {
 
   if (!user) {
     return (
-      <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6 lg:px-8">
         <Card>
           <CardHeader>
             <CardTitle>Login Required</CardTitle>

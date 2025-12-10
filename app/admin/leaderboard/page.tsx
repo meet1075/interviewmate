@@ -158,9 +158,9 @@ export default function AdminLeaderboardPage() {
           </h1>
           <p className="text-muted-foreground">Monitor user engagement and competition</p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-full sm:w-32">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
@@ -170,7 +170,7 @@ export default function AdminLeaderboardPage() {
               <SelectItem value="100">100 per page</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={exportLeaderboard} variant="outline">
+          <Button onClick={exportLeaderboard} variant="outline" className="w-full sm:w-auto" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>

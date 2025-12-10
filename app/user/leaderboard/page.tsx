@@ -73,7 +73,7 @@ export default function LeaderboardPage() {
 
   if (!isSignedIn) {
     return (
-      <div className="w-[70%] mx-auto py-8 text-center space-y-6 px-4 sm:px-6">
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6 lg:px-8">
         <Card>
           <CardHeader>
             <CardTitle>Login Required</CardTitle>
@@ -114,13 +114,13 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
+    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6 lg:px-8">
       <div className="text-center space-y-4">
-        <h1 className="text-3xl font-bold flex items-center justify-center space-x-2">
-          <Trophy className="h-8 w-8 text-yellow-500" />
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center space-x-2">
+          <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
           <span>Leaderboard</span>
         </h1>
-        <p className="text-muted-foreground">Compete with others and climb the ranks!</p>
+        <p className="text-sm sm:text-base text-muted-foreground">Compete with others and climb the ranks!</p>
       </div>
 
       {leaderboardData?.currentUserRank && (
@@ -154,15 +154,15 @@ export default function LeaderboardPage() {
             {leaderboardData?.leaderboard.map((user) => (
               <div
                 key={user._id}
-                className={`flex items-center justify-between p-4 rounded-lg border ${
+                className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 p-3 sm:p-4 rounded-lg border ${
                   user.rank <= 3 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-muted/30'
                 }`}
               >
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-12 h-12">
+                <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
+                  <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
                     {getRankIcon(user.rank)}
                   </div>
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
                     <Image
                       src={user.profileImage}
                       alt={`${user.firstName} ${user.lastName}`}
@@ -171,16 +171,16 @@ export default function LeaderboardPage() {
                       className="rounded-full"
                     />
                   </Avatar>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <h3 className="font-semibold text-sm sm:text-base truncate">
                         {user.firstName} {user.lastName}
                       </h3>
                       <Badge variant={getRankBadgeVariant(user.rank)} className="text-xs">
                         @{user.userName}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <div className="flex items-center flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-1">
                       <span className="flex items-center space-x-1">
                         <Target className="h-3 w-3" />
                         <span>{user.practiceSessionsCompleted} practice</span>
@@ -192,31 +192,33 @@ export default function LeaderboardPage() {
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="flex items-center justify-between sm:justify-end sm:text-right sm:ml-4">
                   <div className="flex items-center space-x-2">
-                    <Star className="h-5 w-5 text-yellow-500" />
-                    <span className="text-2xl font-bold text-primary">
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
+                    <span className="text-xl sm:text-2xl font-bold text-primary">
                       {user.totalPoints.toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">points</p>
+                  <p className="text-xs text-muted-foreground sm:hidden">points</p>
                 </div>
               </div>
             ))}
           </div>
 
           {leaderboardData && leaderboardData.pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6">
               <Button
                 variant="outline"
                 disabled={!leaderboardData.pagination.hasPrevPage}
                 onClick={() => setCurrentPage(prev => prev - 1)}
+                className="w-full sm:w-auto"
+                size="sm"
               >
                 Previous
               </Button>
               
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   Page {leaderboardData.pagination.currentPage} of {leaderboardData.pagination.totalPages}
                 </span>
               </div>
@@ -225,6 +227,8 @@ export default function LeaderboardPage() {
                 variant="outline"
                 disabled={!leaderboardData.pagination.hasNextPage}
                 onClick={() => setCurrentPage(prev => prev + 1)}
+                className="w-full sm:w-auto"
+                size="sm"
               >
                 Next
               </Button>
