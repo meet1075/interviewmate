@@ -21,23 +21,38 @@ async function connectDb() {
 
   if (!cached.promise) {
     const MONGODB_URL = process.env.MONGODB_URL;
-    console.log("MONGO_URL from env:", process.env.MONGODB_URL);
-
 
     if (!MONGODB_URL) {
       throw new Error(
-        "Please define the MONGO_URL environment variable inside .env.local"
+        "Please define the MONGODB_URL environment variable"
       );
     }
 
     console.log("Creating new database connection.");
-    cached.promise = mongoose.connect(MONGODB_URL);
+    
+    // MongoDB connection options optimized for Vercel serverless
+    const opts = {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      retryWrites: true,
+      retryReads: true,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URL, opts).then((mongoose) => {
+      console.log("MongoDB connection established successfully");
+      return mongoose;
+    });
   }
   
   try {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null; // Reset promise on error
+    console.error("MongoDB connection error:", e);
     throw e;
   }
 
