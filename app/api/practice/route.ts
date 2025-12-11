@@ -156,16 +156,16 @@ export async function POST(request: Request) {
     // Populate the questions to send the full data back to the frontend
     await newPracticeSession.populate('questions');
 
-    // 7. Generate remaining 7 questions in the background (non-blocking)
-    // Using setImmediate to ensure it runs after response is sent
+    // 7. Generate remaining questions in stages (3 + 4) in the background
+    // Stage 1: Generate next 3 questions
     setImmediate(async () => {
       try {
-        const remainingQuestions = await generateQuestions(7);
+        const secondBatchQuestions = await generateQuestions(3);
         
-        if (remainingQuestions && remainingQuestions.length > 0) {
-          // Save remaining questions
-          const additionalQuestionDocs = await Question.insertMany(
-            remainingQuestions.map((q: { title: string; description: string; answer: string; hints?: string[]; domain?: string; difficulty?: string }) => ({
+        if (secondBatchQuestions && secondBatchQuestions.length > 0) {
+          // Save second batch questions
+          const secondBatchDocs = await Question.insertMany(
+            secondBatchQuestions.map((q: { title: string; description: string; answer: string; hints?: string[]; domain?: string; difficulty?: string }) => ({
               title: q.title,
               description: q.description,
               answer: q.answer,
@@ -175,23 +175,61 @@ export async function POST(request: Request) {
             }))
           );
           
-          const additionalQuestionIds = additionalQuestionDocs.map(doc => doc._id);
+          const secondBatchIds = secondBatchDocs.map(doc => doc._id);
           
           // Update the practice session with new questions
           await PracticeSession.findByIdAndUpdate(newPracticeSession._id, {
-            $push: { questions: { $each: additionalQuestionIds } }
+            $push: { questions: { $each: secondBatchIds } }
           });
           
           // Update domain question count
           await Domain.findOneAndUpdate(
             { name: domain },
-            { $inc: { questionsCount: additionalQuestionIds.length } }
+            { $inc: { questionsCount: secondBatchIds.length } }
           );
           
-          console.log(`[BACKGROUND] Generated ${additionalQuestionIds.length} additional questions for session ${newPracticeSession._id}`);
+          console.log(`[BACKGROUND_STAGE_1] Generated ${secondBatchIds.length} questions (6/10 total) for session ${newPracticeSession._id}`);
+          
+          // Stage 2: Generate final 4 questions after a short delay
+          setTimeout(async () => {
+            try {
+              const finalBatchQuestions = await generateQuestions(4);
+              
+              if (finalBatchQuestions && finalBatchQuestions.length > 0) {
+                // Save final batch questions
+                const finalBatchDocs = await Question.insertMany(
+                  finalBatchQuestions.map((q: { title: string; description: string; answer: string; hints?: string[]; domain?: string; difficulty?: string }) => ({
+                    title: q.title,
+                    description: q.description,
+                    answer: q.answer,
+                    hints: q.hints,
+                    domain,
+                    difficulty,
+                  }))
+                );
+                
+                const finalBatchIds = finalBatchDocs.map(doc => doc._id);
+                
+                // Update the practice session with new questions
+                await PracticeSession.findByIdAndUpdate(newPracticeSession._id, {
+                  $push: { questions: { $each: finalBatchIds } }
+                });
+                
+                // Update domain question count
+                await Domain.findOneAndUpdate(
+                  { name: domain },
+                  { $inc: { questionsCount: finalBatchIds.length } }
+                );
+                
+                console.log(`[BACKGROUND_STAGE_2] Generated ${finalBatchIds.length} questions (10/10 total) for session ${newPracticeSession._id}`);
+              }
+            } catch (error) {
+              console.error("[BACKGROUND_STAGE_2_ERROR]", error);
+            }
+          }, 2000); // 2 second delay before generating final batch
         }
       } catch (error) {
-        console.error("[BACKGROUND_GENERATION_ERROR]", error);
+        console.error("[BACKGROUND_STAGE_1_ERROR]", error);
         // Background generation failure is non-critical, user already has 3 questions
       }
     });

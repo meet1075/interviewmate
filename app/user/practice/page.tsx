@@ -340,11 +340,11 @@ export default function PracticePage() {
             <Button onClick={handleStartPractice} disabled={!selectedDomain || !selectedDifficulty || isLoading} className="w-full hero-button">
               {isLoading ? "Preparing Session..." : "Start Practice Session"}
             </Button>
-            {isLoading && (
+            {/* {isLoading && (
               <p className="text-xs text-muted-foreground text-center mt-2">
                 Generating initial questions, more will be loaded in the background
               </p>
-            )}
+            )} */}
           </CardContent>
         </Card>
       </div>
@@ -361,16 +361,8 @@ export default function PracticePage() {
         </div>
         <div className="flex items-center flex-wrap gap-2">
           <Badge variant="outline" className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm">
-            Question {currentSession.currentQuestionIndex + 1} of {currentSession.questions.length}
-            {currentSession.questions.length < currentSession.totalQuestions && (
-              <span className="ml-1 text-muted-foreground">({currentSession.totalQuestions} total)</span>
-            )}
+            Question {currentSession.currentQuestionIndex + 1} of {currentSession.totalQuestions}
           </Badge>
-          {currentSession.questions.length < currentSession.totalQuestions && (
-            <Badge variant="secondary" className="px-2 py-1 text-xs animate-pulse">
-              Loading more...
-            </Badge>
-          )}
           <Button variant="outline" size="sm" onClick={handleEndSession}>End Session</Button>
         </div>
       </div>
