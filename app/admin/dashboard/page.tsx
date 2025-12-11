@@ -204,29 +204,29 @@ export default function AdminDashboard() {
             <CardContent className="space-y-6">
               {domainStats.length > 0 ? domainStats.map((domain) => (
                 <div key={domain.domain} className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{domain.domain}</span>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <span>{domain.mockInterviews} mock interviews</span>
-                      <span>{domain.practiceSessions} practice sessions</span>
-                      <span>{domain.uniqueUsersCount} users</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <span className="font-medium text-base">{domain.domain}</span>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+                      <span className="whitespace-nowrap">{domain.mockInterviews} interviews</span>
+                      <span className="whitespace-nowrap">{domain.practiceSessions} sessions</span>
+                      <span className="whitespace-nowrap">{domain.uniqueUsersCount} users</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 text-xs">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-2 sm:p-3 rounded-lg text-center">
                       <Brain className="h-4 w-4 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
                       <div className="font-semibold text-blue-700 dark:text-blue-300">{domain.mockInterviews}</div>
-                      <div className="text-blue-600 dark:text-blue-400">Mock Interviews</div>
+                      <div className="text-blue-600 dark:text-blue-400 text-[10px] sm:text-xs leading-tight">Mock Interviews</div>
                     </div>
-                    <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-center">
+                    <div className="bg-green-50 dark:bg-green-900/20 p-2 sm:p-3 rounded-lg text-center">
                       <BookOpen className="h-4 w-4 text-green-600 dark:text-green-400 mx-auto mb-1" />
                       <div className="font-semibold text-green-700 dark:text-green-300">{domain.practiceSessions}</div>
-                      <div className="text-green-600 dark:text-green-400">Practice Sessions</div>
+                      <div className="text-green-600 dark:text-green-400 text-[10px] sm:text-xs leading-tight">Practice Sessions</div>
                     </div>
-                    <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg text-center">
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-2 sm:p-3 rounded-lg text-center">
                       <UserCheck className="h-4 w-4 text-purple-600 dark:text-purple-400 mx-auto mb-1" />
                       <div className="font-semibold text-purple-700 dark:text-purple-300">{domain.uniqueUsersCount}</div>
-                      <div className="text-purple-600 dark:text-purple-400">Unique Users</div>
+                      <div className="text-purple-600 dark:text-purple-400 text-[10px] sm:text-xs leading-tight">Unique Users</div>
                     </div>
                   </div>
                 </div>
