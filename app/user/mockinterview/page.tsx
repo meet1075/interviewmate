@@ -225,7 +225,7 @@ export default function MockInterviewPage() {
 
   if (!isLoaded) {
     return (
-        <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center px-4 sm:px-6 lg:px-8">
+      <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 text-center px-4 sm:px-6">
             <p>Loading...</p>
         </div>
     )
@@ -233,7 +233,7 @@ export default function MockInterviewPage() {
 
   if (!isSignedIn) {
       return (
-        <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6 lg:px-8">
+        <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Login Required</CardTitle>
@@ -254,7 +254,7 @@ export default function MockInterviewPage() {
   // Results view
   if (showResults && completedSession) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 space-y-6 sm:space-y-8 px-4 sm:px-6">
         <div className="text-center space-y-4">
           <div className="flex justify-center">
             <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center">
@@ -361,7 +361,7 @@ export default function MockInterviewPage() {
     const userSessions = getUserSessions(user.id).filter(s => s.status === 'completed')
     
     return (
-      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 sm:space-y-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 space-y-6 sm:space-y-8 px-4 sm:px-6">
         <div className="text-center space-y-4">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Mock Interview</h1>
           <p className="text-sm sm:text-base lg:text-xl text-muted-foreground">
@@ -475,7 +475,7 @@ export default function MockInterviewPage() {
   // Interview in progress view
   const currentQuestion = currentSession.questions[currentQuestionIndex]
   return (
-    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-4 sm:space-y-6 px-4 sm:px-6 lg:px-8">
+    <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 space-y-4 sm:space-y-6 px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <h1 className="text-2xl font-bold">Mock Interview</h1>

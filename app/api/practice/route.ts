@@ -35,10 +35,10 @@ export async function POST(request: Request) {
       return new NextResponse("Domain and difficulty are required", { status: 400 });
     }
 
-    // 4. Generate questions using the AI
+    // 4. Generate initial 3 questions using the AI for fast response
     const systemPrompt = `
         You are an expert AI assistant for generating Tech interview questions with detailed answers.
-        Your task is to generate exactly 10 questions based on the given domain and difficulty level.
+        Your task is to generate exactly {count} questions based on the given domain and difficulty level.
         
         ### Rules:
         1. Strictly return the output in **valid JSON format**.
@@ -51,19 +51,27 @@ export async function POST(request: Request) {
         8. Do not include any extra explanation outside the JSON.
     `;
 
-    const userPrompt = `Generate 10 interview questions for the domain: ${domain}, difficulty level: ${difficulty}.`;
-
-    let response;
-    try {
-      response = await client.chat.completions.create({
-          model: "gpt-4o-mini", 
-          messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.8,
+    const generateQuestions = async (count: number) => {
+      const userPrompt = `Generate ${count} interview questions for the domain: ${domain}, difficulty level: ${difficulty}.`;
+      
+      const response = await client.chat.completions.create({
+        model: "gpt-4o-mini", 
+        messages: [
+          { role: "system", content: systemPrompt.replace('{count}', count.toString()) },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.8,
       });
+      
+      const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
+      return aiResponse.questions || [];
+    };
+
+    // Generate initial 3 questions
+    let initialQuestions;
+    try {
+      initialQuestions = await generateQuestions(3);
     } catch (aiError: unknown) {
       console.error("AI API Error:", aiError);
       
@@ -94,10 +102,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
-    const generatedQuestions = aiResponse.questions;
-
-    if (!generatedQuestions || generatedQuestions.length === 0) {
+    if (!initialQuestions || initialQuestions.length === 0) {
         return new NextResponse(
           JSON.stringify({ 
             error: "AI failed to generate questions",
@@ -110,9 +115,9 @@ export async function POST(request: Request) {
         );
     }
 
-    // 5. Save the new questions to the database
+    // 5. Save the initial questions to the database
     const newQuestionDocs = await Question.insertMany(
-      generatedQuestions.map((q: { title: string; description: string; answer: string; hints?: string[]; domain?: string; difficulty?: string }) => ({
+      initialQuestions.map((q: { title: string; description: string; answer: string; hints?: string[]; domain?: string; difficulty?: string }) => ({
         title: q.title,
         description: q.description,
         answer: q.answer,
@@ -141,7 +146,7 @@ export async function POST(request: Request) {
         domain,
         difficulty,
         questions: questionIds,
-        totalQuestions: questionIds.length,
+        totalQuestions: 10, // Total will be 10 after background generation
         completedQuestions: 0,
         status: 'in-progress',
     });
@@ -150,6 +155,46 @@ export async function POST(request: Request) {
 
     // Populate the questions to send the full data back to the frontend
     await newPracticeSession.populate('questions');
+
+    // 7. Generate remaining 7 questions in the background (non-blocking)
+    // Using setImmediate to ensure it runs after response is sent
+    setImmediate(async () => {
+      try {
+        const remainingQuestions = await generateQuestions(7);
+        
+        if (remainingQuestions && remainingQuestions.length > 0) {
+          // Save remaining questions
+          const additionalQuestionDocs = await Question.insertMany(
+            remainingQuestions.map((q: { title: string; description: string; answer: string; hints?: string[]; domain?: string; difficulty?: string }) => ({
+              title: q.title,
+              description: q.description,
+              answer: q.answer,
+              hints: q.hints,
+              domain,
+              difficulty,
+            }))
+          );
+          
+          const additionalQuestionIds = additionalQuestionDocs.map(doc => doc._id);
+          
+          // Update the practice session with new questions
+          await PracticeSession.findByIdAndUpdate(newPracticeSession._id, {
+            $push: { questions: { $each: additionalQuestionIds } }
+          });
+          
+          // Update domain question count
+          await Domain.findOneAndUpdate(
+            { name: domain },
+            { $inc: { questionsCount: additionalQuestionIds.length } }
+          );
+          
+          console.log(`[BACKGROUND] Generated ${additionalQuestionIds.length} additional questions for session ${newPracticeSession._id}`);
+        }
+      } catch (error) {
+        console.error("[BACKGROUND_GENERATION_ERROR]", error);
+        // Background generation failure is non-critical, user already has 3 questions
+      }
+    });
 
     return NextResponse.json(newPracticeSession, { status: 201 });
 

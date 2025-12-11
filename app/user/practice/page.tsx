@@ -68,6 +68,42 @@ export default function PracticePage() {
     fetchDomains()
   }, [])
 
+  // Poll for new questions when session is active and total questions haven't been reached
+  useEffect(() => {
+    if (!currentSession) return
+    
+    // Only poll if we expect more questions (totalQuestions is 10 but we have fewer)
+    if (currentSession.questions.length < currentSession.totalQuestions) {
+      const pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/practice/${currentSession.id}`)
+          if (response.ok) {
+            const updatedSession = await response.json()
+            // Update session with new questions if any were added
+            if (updatedSession.questions.length > currentSession.questions.length) {
+              setCurrentSession(prev => {
+                if (!prev) return null
+                return {
+                  ...prev,
+                  questions: updatedSession.questions
+                }
+              })
+            }
+            
+            // Stop polling once we have all questions
+            if (updatedSession.questions.length >= updatedSession.totalQuestions) {
+              clearInterval(pollInterval)
+            }
+          }
+        } catch (error) {
+          console.error('Error polling for new questions:', error)
+        }
+      }, 3000) // Poll every 3 seconds
+      
+      return () => clearInterval(pollInterval)
+    }
+  }, [currentSession])
+
   // Get current question from session
   useEffect(() => {
     if (currentSession && currentSession.questions.length > 0 && currentSession.currentQuestionIndex < currentSession.questions.length) {
@@ -181,7 +217,7 @@ export default function PracticePage() {
     }
 
     return (
-      <div className="w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
+      <div className="w-full lg:w-[70%] mx-auto py-8 space-y-6 px-4 sm:px-6">
         <Card className="border-green-500/20 bg-green-500/5 text-center">
           <CardHeader>
             <CardTitle className="flex items-center justify-center space-x-2 text-2xl">
@@ -211,7 +247,7 @@ export default function PracticePage() {
   // If no session, show domain/difficulty selection
   if (!currentSession) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6 lg:px-8">
+      <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6">
         <div className="text-center space-y-4">
           <h1 className="text-2xl sm:text-3xl font-bold">Practice Mode</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Select domain and difficulty to start practicing</p>
@@ -302,8 +338,13 @@ export default function PracticePage() {
               </div>
             </div>
             <Button onClick={handleStartPractice} disabled={!selectedDomain || !selectedDifficulty || isLoading} className="w-full hero-button">
-              {isLoading ? "Generating Questions..." : "Start Practice Session"}
+              {isLoading ? "Preparing Session..." : "Start Practice Session"}
             </Button>
+            {isLoading && (
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Generating initial questions, more will be loaded in the background
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -312,7 +353,7 @@ export default function PracticePage() {
 
   // If session is active, show current question
   return (
-    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6 lg:px-8">
+    <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Practice Mode</h1>
@@ -320,8 +361,16 @@ export default function PracticePage() {
         </div>
         <div className="flex items-center flex-wrap gap-2">
           <Badge variant="outline" className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm">
-            Question {currentSession.currentQuestionIndex + 1} of {currentSession.totalQuestions}
+            Question {currentSession.currentQuestionIndex + 1} of {currentSession.questions.length}
+            {currentSession.questions.length < currentSession.totalQuestions && (
+              <span className="ml-1 text-muted-foreground">({currentSession.totalQuestions} total)</span>
+            )}
           </Badge>
+          {currentSession.questions.length < currentSession.totalQuestions && (
+            <Badge variant="secondary" className="px-2 py-1 text-xs animate-pulse">
+              Loading more...
+            </Badge>
+          )}
           <Button variant="outline" size="sm" onClick={handleEndSession}>End Session</Button>
         </div>
       </div>

@@ -73,7 +73,7 @@ export default function LeaderboardPage() {
 
   if (!isSignedIn) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6 lg:px-8">
+      <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 text-center space-y-6 px-4 sm:px-6">
         <Card>
           <CardHeader>
             <CardTitle>Login Required</CardTitle>
@@ -114,7 +114,7 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6 lg:px-8">
+    <div className="w-full lg:w-[70%] mx-auto py-4 sm:py-8 space-y-6 px-4 sm:px-6">
       <div className="text-center space-y-4">
         <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center space-x-2">
           <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
