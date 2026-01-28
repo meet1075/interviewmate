@@ -8,7 +8,9 @@ import sessionStorage from "@/utils/sessionStorage";
 
 // Initialize the AI client
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL:"https://api.groq.com/openai/v1"
+
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ sessionId: string }> }) {
@@ -140,7 +142,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
     
     try {
       // Check if AI API key is available
-      if (!process.env.OPENAI_API_KEY) {
+      if (!process.env.GROQ_API_KEY) {
         console.log("OPENAI_API_KEY not found, using default evaluation");
         evaluation = {
           rating: Math.floor(Math.random() * 4) + 6, // Random rating between 6-9
@@ -176,7 +178,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
 
         console.log("Making AI API call...");
         const response = await client.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: "llama-3.1-8b-instant",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },

@@ -11,7 +11,8 @@ import Domain from "@/models/domain.model";
 
 // Initialize the AI client
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL:"https://api.groq.com/openai/v1"
 });
 
 export async function POST(request: Request) {
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
       const userPrompt = `Generate ${count} interview questions for the domain: ${domain}, difficulty level: ${difficulty}.`;
       
       const response = await client.chat.completions.create({
-        model: "gpt-4o-mini", 
+        model: "llama-3.1-8b-instant", 
         messages: [
           { role: "system", content: systemPrompt.replace('{count}', count.toString()) },
           { role: "user", content: userPrompt },

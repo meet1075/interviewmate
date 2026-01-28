@@ -8,7 +8,9 @@ import sessionStorage from "@/utils/sessionStorage";
 
 // Initialize the AI client
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL:"https://api.groq.com/openai/v1"
+
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ sessionId: string }> }) {
@@ -116,7 +118,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ses
     const userPrompt = JSON.stringify(performanceData);
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.1-8b-instant",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

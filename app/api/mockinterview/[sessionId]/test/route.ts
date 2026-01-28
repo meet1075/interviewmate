@@ -42,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ sess
         answersCount: dbSession.answers?.length || 0
       } : null,
       environment: {
-        hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+        hasOpenAIKey: !!process.env.GROQ_API_KEY,
         hasMongoUrl,
         nodeEnv: process.env.NODE_ENV
       },
